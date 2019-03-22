@@ -1,0 +1,19 @@
+{
+  "name": "duis",
+  "version": "1.0.0",
+  "description": "Ferramenta para automatizar um processo de correção de trabalhos.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ."
+  },
+  "keywords": [],
+  "author": "Micael Levi <mykael2010@hotmail.com> (micalevisk.github.io)",
+  "license": "MIT",
+  "dependencies": {
+    "inquirer": "^6.2.2",
+    "puppeteer": "^1.13.0"
+  },
+  "devDependencies": {
+    "local-web-server": "^2.6.1"
+  }
+}

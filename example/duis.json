@@ -1,0 +1,12 @@
+{
+  "root": "./",
+  "structure": {
+    "path": "*/{username}/{trabname}/"
+  },
+  "lookupFilename": "lookup/${username}.json",
+  "questions": [{
+    "type": "confirm",
+    "name": "${trabname}",
+    "message": "Está correto?"
+  }]
+}
