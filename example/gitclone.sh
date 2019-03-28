@@ -4,6 +4,6 @@
 username="${1,,}"
 turma="${2:-CB01}"
 
-git submodule add --branch=master \
+git submodule add -b master \
   "https://github.com/${username}/ProgWeb" \
   "./${turma}/${username}"
