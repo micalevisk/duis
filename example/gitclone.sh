@@ -4,6 +4,6 @@
 username="${1,,}"
 turma="${2:-CB01}"
 
-git clone --verbose --branch=master \
+git submodule add --branch=master \
   "https://github.com/${username}/ProgWeb" \
   "./${turma}/${username}"
