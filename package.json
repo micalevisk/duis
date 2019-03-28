@@ -10,10 +10,6 @@
   "author": "Micael Levi <mykael2010@hotmail.com> (micalevisk.github.io)",
   "license": "MIT",
   "dependencies": {
-    "inquirer": "^6.2.2",
-    "puppeteer": "^1.13.0"
-  },
-  "devDependencies": {
-    "local-web-server": "^2.6.1"
+    "inquirer": "^6.2.2"
   }
 }
