@@ -124,8 +124,23 @@ const perguntas2 = [ q_expand, q_password ];
 
 const perguntas3 = [ q_rawlist, q_editor ];
 
-
-inquirer.prompt(perguntas1).then(answers => {
+function print(answers) {
   console.log('\nANSWERS:');
   console.log( JSON.stringify(answers, null, '  ') );
-});
+}
+
+/*
+(async function() {
+  answers = await inquirer.prompt(perguntas1)
+  print(answers)
+  answers = await inquirer.prompt(perguntas2)
+  print(answers)
+  answers = await inquirer.prompt(perguntas3)
+  print(answers)
+})()
+*/
+
+(async function() {
+  answers = await inquirer.prompt(require('./example/duis.questions.js'))
+  print(answers)
+})()

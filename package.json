@@ -4,13 +4,18 @@
   "description": "Ferramenta para automatizar um processo de correção de trabalhos.",
   "main": "index.js",
   "scripts": {
-    "start": "node ."
+    "start": "node .",
+    "dev": "nodemon --inspect-brk ."
   },
   "keywords": [],
   "author": "Micael Levi <mykael2010@hotmail.com> (micalevisk.github.io)",
   "license": "MIT",
   "dependencies": {
+    "google-spreadsheet": "^2.0.7",
     "inquirer": "^6.2.2",
     "shelljs": "^0.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.10"
   }
 }
