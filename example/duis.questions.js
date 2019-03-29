@@ -13,12 +13,6 @@ const exercicioEntregue = anwsers => anwsers['criterio_F'] === false
 module.exports = [
   {
     type: 'confirm',
-    name: 'run_testcafe',
-    message: 'Executar o Testcafe',
-    default: false,
-  },
-  {
-    type: 'confirm',
     name: 'criterio_F',
     message: 'não entregue ou totalmente fora do esperado',
     default: false,
