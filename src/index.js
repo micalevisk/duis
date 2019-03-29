@@ -68,6 +68,7 @@ const workingdirs = shell.ls('-d', path.join(workingdirsAbsPath, classDirPath))
 
 
 for (const workingdir of workingdirs) {
+
   console.info()
   console.info('<---------------------')
   console.info(workingdir)
@@ -94,4 +95,5 @@ for (const workingdir of workingdirs) {
   const [...workingdirFiles] = shell.ls('*')
   console.log(workingdirFiles)
   */
+
 }
