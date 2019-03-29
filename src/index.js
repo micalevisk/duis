@@ -91,6 +91,10 @@ for (const workingdir of workingdirs) {
   console.log('passou')
   // _.writeJSON(studentLookupAbsPath, { id: lastCommitId, })
 
+  // TODO: [4.3]
+
+  // TODO: executar testes [4.6]
+
   /*
   const [...workingdirFiles] = shell.ls('*')
   console.log(workingdirFiles)

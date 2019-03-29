@@ -46,7 +46,7 @@ Iniciar processo com **`$ duis TRAB1`**
     4. Senão, abrir o navegador em _working dir_
     5. Fazer as perguntas definidas no `duis.questions.js`
     6. Se existir o arquivo de teste (do [Testcafe](https://github.com/DevExpress/testcafe)) associado ao "trabalho" corrente, testá-lo em modo _headless_ (eg. `./Turma1/__tests__/TRAB1.test.js`)
-    7. Ao fechar o navegador (e, consequentemente, parar o server), registrar/append respostas no arquivo de lookup correspondente ao _working dir_ atual
+    7. Esperar a resposta da pergunta "Finalizar avaliação deste aluno (`<studentGitRepoDirName>`)?" ~ para atualizar o arquivo de lookup correspondente e parar o servidor
 
 ## Formato do arquivo de "lookup" gerado pra cada _working dir_
 > o nome do arquivo deve ser o mesmo do diretório git em que o `working dir` está
