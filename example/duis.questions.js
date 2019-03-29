@@ -5,9 +5,9 @@ Convenções para este arquivo:
 `name` = nome da célula
 */
 
-const questao = (name, message) => ({ name, message, when: exercicioEntregue })
-
 const exercicioEntregue = anwsers => anwsers['criterio_F'] === false
+
+const questao = (name, message) => ({ name, message, when: exercicioEntregue })
 
 
 module.exports = [
