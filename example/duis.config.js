@@ -1,3 +1,5 @@
+const workingdirQuestions = require('./duis.questions')
+
 // perguntas cuja respostas definirão mais variáveis na config abaixo
 // Se `name` estiver com todas as letras em maiúsculas, a resposta será tratada como variável a ser usada nos templates
 const startQuestions = [
@@ -51,7 +53,7 @@ module.exports = {
   /********************* opcionais *********************/
 
   test: {
-    // template do diretório em que estarão descritos os testes para cada "trabalho"
+    // template do diretório em que estarão descritos os testes para cada "trabalho" (working dir)
     dirPathMask: './{TURMA}/__tests__', // os arquivos devem estar no formato: `<TRAB>.test.js`
     // comando que será executado sobre o arquivo de "teste" do trabalho corrente
     commandToRun: 'testcafe -sf chrome:headless'
@@ -59,6 +61,9 @@ module.exports = {
 
   // questões a serem respondidas imediatamente após o setup das config
   startQuestions,
+  
+  // questões a serem respondidas após realizar os testes, i.e., após abrir o navegador no "working dir" corrente
+  workingdirQuestions,
 
   // executar `git pull origin master` ao entrar no repo (do aluno)
   gitpullForEachRepo: false,
