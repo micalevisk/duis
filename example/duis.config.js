@@ -36,8 +36,8 @@ module.exports = {
   // template do diretório parent ao que será passado como arg do Duis
   workingdirParentDirPathMask: './{TURMA}/{NICK_ALUNO}/',
 
-  // template do diretório em que estarão descritos os testes para cada "trabalho"
-  testsDirPathMask: './{TURMA}/__tests__', // os arquivos devem estar no formato: `<TRAB>.test.js`
+  // a partir do dir. resolvido acima, é preciso voltar quantos níveis para ir ao que tem o `.git` (do aluno)
+  levelsToParentDir: 1,
 
   // porta em que o servidor PHP tentará escutar; `null` caso não queira servir os repos
   serverPort: 8080,
@@ -49,6 +49,13 @@ module.exports = {
   },
 
   /********************* opcionais *********************/
+
+  test: {
+    // template do diretório em que estarão descritos os testes para cada "trabalho"
+    dirPathMask: './{TURMA}/__tests__', // os arquivos devem estar no formato: `<TRAB>.test.js`
+    // comando que será executado sobre o arquivo de "teste" do trabalho corrente
+    commandToRun: 'testcafe -sf chrome:headless'
+  },
 
   // questões a serem respondidas imediatamente após o setup das config
   startQuestions,

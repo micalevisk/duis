@@ -1,7 +1,7 @@
 {
   "name": "duis",
   "version": "1.0.0",
-  "description": "Ferramenta para automatizar um processo de correção de trabalhos.",
+  "description": "Ferramenta para otimizar o processo de correção de trabalhos, automatizando etapas constantes.",
   "main": "index.js",
   "scripts": {
     "start": "node .",

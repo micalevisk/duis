@@ -4,6 +4,8 @@ const _ = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
 
+if (isDev) shell.set('-v')
+
 const pathJoinWithRoot = path.join.bind(null, __dirname, '..', './example')
 
 const CONFIG_PATH = pathJoinWithRoot('duis.config.js')
@@ -20,20 +22,19 @@ const classDirPath = 'PHP1/' // o primeiro arg passado ao `duis` CLI
 const lookupDirPath = _.t(config.lookupDirPathMask, startVariables)
 const lookupAbsPath = pathJoinWithRoot(lookupDirPath)
 
-const testsDirPath = _.t(config.testsDirPathMask, startVariables)
-const testsAbsPath = pathJoinWithRoot(testsDirPath)
+if (config.test) {
+  const testsDirPath = _.t(config.test.dirPathMask, startVariables)
+  const testsAbsPath = pathJoinWithRoot(testsDirPath)
+
+  delete config['test']
+  if ( shell.test('-d', testsAbsPath) ) config['testsDirAbsPath'] = testsAbsPath
+}
 
 
 /******************************************************************************/
 
-/**
- * Considera que o repo do aluno será o diretório
- * pai do "working dir" (diretório do exercício).
- * ie., está no nível anterior
- * @param {string} wdAbsPath
- */
 function getSudentDirName(wdAbsPath) {
-  return path.basename( path.join(wdAbsPath, '..') )
+  return path.basename( path.join(wdAbsPath, '../'.repeat(config.levelsToParentDir)) )
   /*
   const dirnameExec = shell.exec('dirname ' + wdAbsPath, {silent:true})
   if (dirnameExec.code) throw Error(dirnameExec.stderr)
@@ -45,19 +46,16 @@ function getSudentDirName(wdAbsPath) {
   */
 }
 
-if (isDev) shell.set('-v')
 
 if (!isDev) { !shell.which('git') && process.exit(1); }
 
 
-delete config['inspectDirPathMask']
+delete config['workingdirParentDirPathMask']
 config['inspectDirAbsPath'] = workingdirsAbsPath
 
 delete config['lookupDirPathMask']
 config['lookupDirAbsPath'] = lookupAbsPath
 
-delete config['testsDirPathMask']
-if ( shell.test('-d', testsAbsPath) ) config['testsDirAbsPath'] = testsAbsPath
 
 // console.dir(config, {depth: null})
 
@@ -101,3 +99,5 @@ for (const workingdir of workingdirs) {
   */
 
 }
+
+// console.dir(config, {depth: null})
