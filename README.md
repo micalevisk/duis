@@ -44,7 +44,7 @@ Iniciar processo com **`$ duis TRAB1`**
         1. Criar um servidor PHP no _working dir_
         2. Abrir o navegador definido em `CONFIG#browser` na raiz do server
     4. Senão, abrir o navegador em _working dir_
-    5. Se existir o arquivo de teste associado ao "trabalho" corrente, testá-lo em modo _headless_ (eg. `./Turma1/__tests__/TRAB1.test.js`)
+    5. Se existir o arquivo de teste associado ao "trabalho" corrente executando o comando definido em `CONFIG#test.commandToRun` (eg. `testcafe -sf chrome:headless ./Turma1/__tests__/TRAB1.test.js`)
     6. Fazer as perguntas definidas no `duis.questions.js`
     7. Esperar a resposta da pergunta "Finalizar avaliação deste aluno (`<studentGitRepoDirName>`)?" ~ para atualizar o arquivo de lookup correspondente e parar o servidor
 
