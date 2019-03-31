@@ -54,8 +54,9 @@ if (config.test && config.test.commandToRun) {
 
 function getSudentDirName(wdAbsPath) {
   return path.basename(
-    path.join(wdAbsPath,
-             '../'.repeat(config.levelsToParentDir))
+    path.join(
+      wdAbsPath,
+      ('..' + path.sep).repeat(config.levelsToParentDir))
   )
 }
 
