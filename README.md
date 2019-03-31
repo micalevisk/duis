@@ -34,8 +34,8 @@
 
 Iniciar processo com **`$ duis TRAB1`**
 
-1. Ler o arquivo de setup `duis.config.js` (se não existir: _exit 1_) para definir o estado inicial
-2. Fazer as perguntas definidas em `CONFIG#startQuestions`, se existir alguma, para adicionar mais valores ao estado inicial
+1. Carregar as configurações expostas no arquivo `duis.config.js` (se não existir: _exit 1_)
+2. Fazer as perguntas definidas em `CONFIG#startQuestions`, para adicionar mais valores ao estado inicial
 3. Criar o diretório definido em `CONFIG#lookupDirPathMask`, se ele já não existir
 4. Para cada diretório resolvido com a junção de `CONFIG#workingdirParentDirPathMask` (renderizado) e `TRAB1`, fazer:
     1. Definir o diretório resolvido como _working dir_ corrente (eg. `./Turma1/nick-aluno-a/TRAB1`) ~ caminho absoluto
