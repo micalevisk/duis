@@ -8,16 +8,19 @@ const isDev = process.env.NODE_ENV === 'development'
 
 const pathJoinWithRoot = path.join.bind(null, __dirname, '..', './example')
 
+//#region [1]
 const CONFIG_PATH = pathJoinWithRoot('duis.config.js')
 const config = _.requireUpdated(CONFIG_PATH)
+//#endregion
 
-// após ler as respostas de `startQuestions` e filtrar as keys com letras maiúsculas
+// TODO: [2]
+// respostas com as keys (name) com letras maiúsculas
 const startVariables = { TURMA: 'CB01', NICK_ALUNO: '*' }
 
 // resolvido após responder as perguntas de setup
 const workingdirParentDirPathMask = _.t(config.workingdirParentDirPathMask, startVariables)
 const workingdirsDirAbsPath = pathJoinWithRoot(workingdirParentDirPathMask)
-const classDirPath = 'PHP1/' // o primeiro arg passado ao `duis` CLI
+const entryDirPath = 'PHP1/' // o primeiro arg passado ao `duis` CLI
 
 const lookupDirPath = _.t(config.lookupDirPathMask, startVariables)
 const lookupDirAbsPath = pathJoinWithRoot(lookupDirPath)
@@ -54,15 +57,6 @@ function getSudentDirName(wdAbsPath) {
     path.join(wdAbsPath,
              '../'.repeat(config.levelsToParentDir))
   )
-  /*
-  const dirnameExec = shell.exec('dirname ' + wdAbsPath, {silent:true})
-  if (dirnameExec.code) throw Error(dirnameExec.stderr)
-
-  const basenameExec = shell.exec('basename ' + dirnameExec.stdout, {silent:true})
-  if (basenameExec.code) throw Error(basenameExec.stderr)
-
-  return basenameExec.stdout
-  */
 }
 
 
@@ -78,10 +72,11 @@ config['lookupDirAbsPath'] = lookupDirAbsPath
 
 // console.dir(config, {depth: null})
 
-
+//#region [3]
 shell.mkdir('-p', config.lookupDirAbsPath)
+//#endregion
 
-const workingdirs = shell.ls('-d', path.join(workingdirsDirAbsPath, classDirPath))
+const workingdirs = shell.ls('-d', path.join(workingdirsDirAbsPath, entryDirPath))
 
 
 for (const workingdir of workingdirs) {
@@ -111,7 +106,7 @@ for (const workingdir of workingdirs) {
   //#region [4.5]
   if (!isDev)
   if (config.commandOnTest) {
-    const commandToRunTest = config.commandOnTest( path.basename(classDirPath) )
+    const commandToRunTest = config.commandOnTest( path.basename(entryDirPath) )
     if (commandToRunTest) {
       // TODO: confirmar se deseja rodar o comando `commandToRunTest`
 
