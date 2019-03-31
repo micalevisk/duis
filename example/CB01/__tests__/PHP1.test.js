@@ -1,4 +1,4 @@
-// run with `testcafe -sf --live chrome:headless PHP1.test.js`
+// run with `testcafe chrome:headless --sf --live PHP1.test.js`
 // ref: https://devexpress.github.io/testcafe/documentation/test-api/a-z.html
 
 import { Selector } from 'testcafe'
@@ -15,8 +15,12 @@ const page = {
 //#endregion
 
 
-fixture `PHP1`
+fixture `Exercício PHP1`
+  .meta({ author: '@micalevisk', creationDate: '01/04/2019' })
   .page `http://localhost:8080` // assumindo que o servidor estará escutando nesse endereço
+
+
+test(`Servidor funcionando`, t => t.wait(1000));
 
 test('Preenchendo `Dados Básicos`', async t => {
   const nome = '&*66Micael Levii'
