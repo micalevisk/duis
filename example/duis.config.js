@@ -41,10 +41,7 @@ module.exports = {
   // a partir do dir. resolvido acima, é preciso voltar quantos níveis para ir ao que tem o `.git` (do aluno)
   levelsToParentDir: 1,
 
-  // porta em que o servidor PHP tentará escutar; `null` caso não queira servir os repos
-  serverPort: 8080,
-
-  // navegador que abrirá a pasta do aluno (ou o server, se criado)
+  // navegador que abrirá na pasta do aluno (ou o server, se iniciado)
   browser: {
     name: 'chrome',
     opts: '--incognito'
@@ -52,13 +49,16 @@ module.exports = {
 
   /********************* opcionais *********************/
 
+  // porta em que o servidor PHP tentará escutar
+  serverPort: 8080,
+
   test: {
     // como devem terminar os arquivos de testes, i.e, a extensão deles
     fileExtName: '.test.js',
     // template do diretório em que estarão descritos os testes para cada "trabalho" (working dir)
     dirPathMask: './{TURMA}/__tests__', // os arquivos devem estar no formato: `<ENTRY_DIR>.<fileExtName>`
     // comando que será executado sobre o arquivo de "teste" do trabalho corrente
-    commandToRun: 'testcafe -sf chrome:headless'
+    commandToRun: 'testcafe chrome:headless --sf --color -u'
   },
 
   // questões a serem respondidas imediatamente após o setup das config
