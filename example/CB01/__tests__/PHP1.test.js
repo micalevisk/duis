@@ -16,7 +16,7 @@ const page = {
 
 
 fixture `PHP1`
-  .page `http://localhost:3000`
+  .page `http://localhost:8080` // assumindo que o servidor estará escutando nesse endereço
 
 test('Preenchendo `Dados Básicos`', async t => {
   const nome = '&*66Micael Levii'
