@@ -39,16 +39,20 @@ Iniciar processo com **`$ duis TRAB1`**
 3. Criar o diretório definido em `CONFIG#lookupDirPathMask`, se ele já não existir
 4. Para cada diretório resolvido com a junção de `CONFIG#workingdirParentDirPathMask` (renderizado) e `TRAB1`, fazer:
     1. Definir o diretório resolvido como _working dir_ corrente (eg. `./Turma1/nick-aluno-a/TRAB1`) ~ caminho absoluto
-    2. Se o id do último commit no _working dir_ for igual ao recuperado do arquivo de lookup corrente (eg. `./Turma1/.duis.lookup/nick-aluno-a.json`), significa que esse diretório já foi visto, então deve-se seguir para a próxima iteração
-    3. Se `CONFIG#serverPort` for diferente de `null`, então, fazer:
+    2. Executar os comandos definidos em `CONFIG#commandsForEachParentDir.onEnter`
+    3. Se o id do último commit no _working dir_ for igual ao recuperado do arquivo de lookup corrente (eg. `./Turma1/.duis.lookup/nick-aluno-a.json`), significa que esse diretório já foi visto, então deve-se seguir para a próxima iteração
+    4. Se `CONFIG#serverPort` estiver definido, então, fazer:
         1. Criar um servidor PHP no _working dir_
         2. Abrir o navegador definido em `CONFIG#browser` na raiz do server
-    4. Senão, abrir o navegador em _working dir_
-    5. Se existir o arquivo de teste associado ao "trabalho" corrente, fazer:
+    5. Senão, abrir o navegador em _working dir_
+    6. Se existir o arquivo de teste associado ao "trabalho" corrente, fazer:
         1. Perguntar se deseja executar o comando definido em `CONFIG#test.commandToRun` (eg. `testcafe -sf chrome:headless ./Turma1/__tests__/TRAB1.test.js`)
         2. Executar o comando para (teoricamente) executar os testes
-    6. Fazer as perguntas definidas no `CONFIG#workingdirQuestions`
-    7. Esperar a resposta da pergunta "Finalizar avaliação deste aluno (`<studentGitRepoDirName>`)?" ~ para atualizar o arquivo de lookup correspondente e parar o servidor
+    7. Fazer as perguntas definidas no `CONFIG#workingdirQuestions`
+    8. Esperar a resposta da pergunta "Finalizar avaliação deste aluno (`<studentGitRepoDirName>`)?"
+        1. Atualizar o arquivo de lookup correspondente
+        2. Parar o servidor
+        3. Executar os comandos definidos em `CONFIG#commandsForEachParentDir.onBeforeLeave`
 
 ## Formato do arquivo de "lookup" gerado pra cada _working dir_
 > o nome do arquivo deve ser o mesmo do diretório git em que o `working dir` está

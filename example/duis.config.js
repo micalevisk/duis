@@ -15,12 +15,6 @@ const startQuestions = [
     default: '*'
   },
   {
-    type: 'confirm',
-    name: 'gitpullForEachRepo',
-    default: true,
-    message: 'Fazer `git pull origin master` a cada repo',
-  },
-  {
     type: 'input',
     name: 'commitLimitDate',
     default: new Date().toISOString().substr(0, 10),
@@ -47,7 +41,7 @@ module.exports = {
     opts: '--incognito'
   },
 
-  /********************* opcionais *********************/
+  /*************************** OPCIONAIS ***************************/
 
   // porta em que o servidor PHP tentará escutar
   serverPort: 8080,
@@ -67,19 +61,18 @@ module.exports = {
   // questões a serem respondidas após realizar os testes, i.e., após abrir o navegador no "working dir" corrente
   workingdirQuestions,
 
-  // executar `git pull origin master` ao entrar no repo (diretório resolvido de `workingdirParentDirPathMask`)
-  gitpullForEachRepo: false,
-
-  // comandos a serem executados na linha de comandos ao entrar no repo (diretório resolvido de `workingdirParentDirPathMask`)
-  commandsForEachRepo: {
-    // antes de abrir o navegador na pasta do aluno
-    before: [
-      'git fetch origin master',
-      'git reset --hard origin/master'
+  // comandos a serem executados na linha de comandos ao entrar "diretório parent" (diretório resolvido de `workingdirParentDirPathMask`)
+  commandsForEachParentDir: {
+    // antes de abrir o navegador na pasta do aluno (assim que entrar no working dir)
+    onEnter: [
+      'git checkout master',
+      'git pull origin master',
+      // 'git fetch origin master',
+      // 'git reset --hard origin/master',
     ],
-    // após fechar o navegador
-    after: [
-    ]
+    // após parar o servidor (antes de seguir para o próximo working dir)
+    onBeforeLeave: [
+    ],
   },
 
 }

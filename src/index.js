@@ -1,10 +1,11 @@
 const path = require('path')
-const shell = require('shelljs')
+const hshell = require('./human-shell')
 const _ = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
 
-// if (isDev) shell.set('-v')
+// if (isDev) hshell.set('-v')
+hshell.config.silent = true
 
 const pathJoinWithRoot = path.join.bind(null, __dirname, '..', './example')
 
@@ -16,6 +17,8 @@ const config = _.requireUpdated(CONFIG_PATH)
 // TODO: [2]
 // respostas com as keys (name) com letras maiúsculas
 const startVariables = { TURMA: 'CB01', NICK_ALUNO: '*' }
+// respostas restantes
+config['startAnswers'] = { commitLimitDate: '2019-03-31' }
 
 // resolvido após responder as perguntas de setup
 const workingdirParentDirPathMask = _.t(config.workingdirParentDirPathMask, startVariables)
@@ -29,7 +32,7 @@ if (config.test && config.test.commandToRun) {
   const testsDirPath = _.t(config.test.dirPathMask, startVariables)
   const testsDirAbsPath = pathJoinWithRoot(testsDirPath)
 
-  if (shell.test('-d', testsDirAbsPath)) {
+  if ( hshell.isDirectory(testsDirAbsPath) ) {
     const commandToTest = config.test.commandToRun
     const fileExtName = config.test.fileExtName || ''
 
@@ -39,7 +42,7 @@ if (config.test && config.test.commandToRun) {
         base: testFilename + fileExtName
       })
 
-      if (shell.test('-f', fileToTestAbsPath))
+      if (hshell.isReadableFile(fileToTestAbsPath))
         return `${commandToTest} ${fileToTestAbsPath} ${args.join(' ')}`
     }
 
@@ -49,19 +52,19 @@ if (config.test && config.test.commandToRun) {
   delete config['test']
 }
 
-
-/******************************************************************************/
-
-function getSudentDirName(wdAbsPath) {
-  return path.basename(
-    path.join(
-      wdAbsPath,
-      ('..' + path.sep).repeat(config.levelsToParentDir))
-  )
+if (config.serverPort) {
+  // TODO: instanciar o server, sem "iniciá-lo", i.e., deixar o diretório a ser aberto pendente
 }
 
 
-if (!isDev) { !shell.which('git') && process.exit(1); }
+function getParentDirFor(wdAbs) {
+  return path.join(wdAbs, ('..' + path.sep).repeat(config.levelsToParentDir))
+}
+
+/******************************************************************************/
+
+
+if (!isDev) { !hshell.hasProgram('git') && process.exit(1); }
 
 
 delete config['workingdirParentDirPathMask']
@@ -74,37 +77,52 @@ config['lookupDirAbsPath'] = lookupDirAbsPath
 // console.dir(config, {depth: null})
 
 //#region [3]
-shell.mkdir('-p', config.lookupDirAbsPath)
+hshell.createDirIfNotExists(config.lookupDirAbsPath)
 //#endregion
 
-const workingdirs = shell.ls('-d', path.join(workingdirsDirAbsPath, entryDirPath))
+const workingdirs = hshell.listDirectoriesFrom( path.join(workingdirsDirAbsPath, entryDirPath) )
+
+function runHook(name) {
+  if (!config.commandsForEachParentDir
+   || !config.commandsForEachParentDir[name]) return;
+
+ config.commandsForEachParentDir[name]
+    .forEach(command => hshell.runSafe(command))
+}
 
 
 for (const workingdir of workingdirs) {
-
   if (isDev) console.info();console.info('<---------------------');console.info(workingdir);console.info()
 
-  // if (shell.test('-f', path.join(lookupDirAbsPath, )))
+  const parentDirAbsPath = getParentDirFor(workingdir)
+  hshell.enterOnDir(parentDirAbsPath)
 
-  shell.cd(workingdir)
-  const studentGitRepoDirName = getSudentDirName(workingdir)
-  const studentlookupDirAbsPath = path.join(lookupDirAbsPath, studentGitRepoDirName + '.json')
-  // shell.touch(studentlookupDirAbsPath) // cria o arquivo de lookup para o aluno atual (se não existir)
+  //#region [4.2]
+  runHook('onEnter')
+  //#endregion
 
-  // const lastCommitId = shell.exec(`git --git-dir "${'.'}" rev-list -1 --until="2019-03-27" --abbrev-commit master`, {silent:true})
-  const commitLimitDate = '2019-03-27' // resposta da pergunta
-  const lastCommitId = shell.exec(`git rev-list -1 --until="${commitLimitDate}" --abbrev-commit remotes/origin/master`, {silent:true}).stdout.trim()
+  //#region [4.3]
+  const parentDirName = path.basename(parentDirAbsPath)
+  const parentLookupDirAbsPath = path.join(lookupDirAbsPath, parentDirName + '.json')
+  //#endregion
 
-  const currLookup = _.loadJSON(studentlookupDirAbsPath)
+  //#region [4.1]
+  hshell.enterOnDir(workingdir)
+  //#endregion
+
+  //#region [4.3]
+  const lastCommitId = hshell.runSafe(`git rev-list -1 --until="${config.startAnswers.commitLimitDate}" --abbrev-commit remotes/origin/master`)
+  const currLookup = _.loadJSON(parentLookupDirAbsPath)
   if (currLookup.id === lastCommitId) continue
+  //#endregion
 
-  console.log('passou')
-
-  // TODO: [4.3]
+  console.log(`passou[${lastCommitId}]`)
 
   // TODO: [4.4]
 
-  //#region [4.5]
+  // TODO: [4.5]
+
+  //#region [4.6]
   if (!isDev)
   if (config.commandOnTest) {
     const commandToRunTest = config.commandOnTest( path.basename(entryDirPath) )
@@ -112,19 +130,19 @@ for (const workingdir of workingdirs) {
       // TODO: confirmar se deseja rodar o comando `commandToRunTest`
 
       _.wrapSyncOutput(() => {
-        shell.exec(commandToRunTest)
+        hshell.exec(commandToRunTest)
       })
     }
   }
   //#endregion
 
-  // TODO: [4.6]
-
   // TODO: [4.7]
 
+  // TODO: [4.8]
+
   /*
-  _.writeJSON(studentlookupDirAbsPath, { id: lastCommitId, })
-  const [...workingdirFiles] = shell.ls('*')
+  _.writeJSON(parentLookupDirAbsPath, { id: lastCommitId, })
+  const [...workingdirFiles] = hshell.ls('*')
   console.log(workingdirFiles)
   */
 
