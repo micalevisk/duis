@@ -108,7 +108,7 @@ class Server {
 }
 
 if (require.main) {
-  const port = process.env.PORT || 3000
+  const port = process.env.PORT || 8080
   const hostname = 'localhost'
   const browser = 'chrome'
 

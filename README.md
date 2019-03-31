@@ -34,7 +34,7 @@
 
 Iniciar processo com **`$ duis TRAB1`**
 
-1. Ler o arquivo de setup `duis.config.js` (se não existir: _exit 1_) para definir o estado inicial. Além do `duis.questions.js`
+1. Ler o arquivo de setup `duis.config.js` (se não existir: _exit 1_) para definir o estado inicial
 2. Fazer as perguntas definidas em `CONFIG#startQuestions`, se existir alguma, para adicionar mais valores ao estado inicial
 3. Criar o diretório definido em `CONFIG#lookupDirPathMask`, se ele já não existir
 4. Para cada diretório resolvido com a junção de `CONFIG#workingdirParentDirPathMask` (renderizado) e `TRAB1`, fazer:
@@ -44,7 +44,9 @@ Iniciar processo com **`$ duis TRAB1`**
         1. Criar um servidor PHP no _working dir_
         2. Abrir o navegador definido em `CONFIG#browser` na raiz do server
     4. Senão, abrir o navegador em _working dir_
-    5. Se existir o arquivo de teste associado ao "trabalho" corrente executando o comando definido em `CONFIG#test.commandToRun` (eg. `testcafe -sf chrome:headless ./Turma1/__tests__/TRAB1.test.js`)
+    5. Se existir o arquivo de teste associado ao "trabalho" corrente, fazer:
+        1. Perguntar se deseja executar o comando definido em `CONFIG#test.commandToRun` (eg. `testcafe -sf chrome:headless ./Turma1/__tests__/TRAB1.test.js`)
+        2. Executar o comando para (teoricamente) executar os testes
     6. Fazer as perguntas definidas no `CONFIG#workingdirQuestions`
     7. Esperar a resposta da pergunta "Finalizar avaliação deste aluno (`<studentGitRepoDirName>`)?" ~ para atualizar o arquivo de lookup correspondente e parar o servidor
 

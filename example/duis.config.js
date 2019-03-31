@@ -53,15 +53,17 @@ module.exports = {
   /********************* opcionais *********************/
 
   test: {
+    // como devem terminar os arquivos de testes, i.e, a extensão deles
+    fileExtName: '.test.js',
     // template do diretório em que estarão descritos os testes para cada "trabalho" (working dir)
-    dirPathMask: './{TURMA}/__tests__', // os arquivos devem estar no formato: `<TRAB>.test.js`
+    dirPathMask: './{TURMA}/__tests__', // os arquivos devem estar no formato: `<TRAB>.<fileExtName>`
     // comando que será executado sobre o arquivo de "teste" do trabalho corrente
     commandToRun: 'testcafe -sf chrome:headless'
   },
 
   // questões a serem respondidas imediatamente após o setup das config
   startQuestions,
-  
+
   // questões a serem respondidas após realizar os testes, i.e., após abrir o navegador no "working dir" corrente
   workingdirQuestions,
 
