@@ -65,10 +65,10 @@ module.exports = {
   // questões a serem respondidas após realizar os testes, i.e., após abrir o navegador no "working dir" corrente
   workingdirQuestions,
 
-  // executar `git pull origin master` ao entrar no repo (do aluno)
+  // executar `git pull origin master` ao entrar no repo (diretório resolvido de `workingdirParentDirPathMask`)
   gitpullForEachRepo: false,
 
-  // comandos da linha de comandos a serem executados ao entrar no repo (do aluno)
+  // comandos a serem executados na linha de comandos ao entrar no repo (diretório resolvido de `workingdirParentDirPathMask`)
   commandsForEachRepo: {
     // antes de abrir o navegador na pasta do aluno
     before: [
