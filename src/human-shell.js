@@ -53,6 +53,7 @@ const humanShell = {
   },
 
   runSafe(command) {
+    if (typeof command !== 'string') return ''
     return throwingError('exec', command).stdout.trim()
   }
 }
