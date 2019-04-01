@@ -6,7 +6,7 @@ $ duis <PATH/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
               relativo ao diretórío do "aluno" (AKA working dir; onde está o `.git`)
 ```
 
-## Etapas
+## Demo
 
 <details>
 <summary>Exemplo de árvore do diretório a ser trabalhado</summary>
