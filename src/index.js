@@ -57,8 +57,21 @@ if (config.serverPort) {
 }
 
 
+function getHookFor(context) {
+  return config[context]
+}
+
+
 function getParentDirFor(wdAbs) {
   return path.join(wdAbs, ('..' + path.sep).repeat(config.levelsToParentDir))
+}
+
+function runHookOn(context, name) {
+  if (!context || !context[name]) return;
+  for (const command of context[name]) {
+    //if (config.safeMode) // TODO: perguntar se deseja executar `command`
+    _.wrapSyncOutput(() => hsell.runSafe(command))
+  }
 }
 
 /******************************************************************************/
@@ -82,23 +95,17 @@ hshell.createDirIfNotExists(config.lookupDirAbsPath)
 
 const workingdirs = hshell.listDirectoriesFrom( path.join(workingdirsDirAbsPath, entryDirPath) )
 
-function runHook(name) {
-  if (!config.commandsForEachParentDir
-   || !config.commandsForEachParentDir[name]) return;
-
- config.commandsForEachParentDir[name]
-    .forEach(command => hshell.runSafe(command))
-}
-
 
 for (const workingdir of workingdirs) {
   if (isDev) console.info();console.info('<---------------------');console.info(workingdir);console.info()
 
+  const userCommandsHooks = getHookFor('commandsForEachParentDir')
+  
   const parentDirAbsPath = getParentDirFor(workingdir)
   hshell.enterOnDir(parentDirAbsPath)
 
   //#region [4.2]
-  runHook('onEnter')
+  runHookOn(userCommandsHooks, 'onEnter')
   //#endregion
 
   //#region [4.3]
