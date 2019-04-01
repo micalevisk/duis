@@ -1,3 +1,9 @@
+# Duis
+
+Feito em cima do [Shelljs](https://www.npmjs.com/package/shelljs) e [inquirer](https://www.npmjs.com/package/inquirer)
+
+/* TODO: finalizar descrição */
+
 # Como usar
 ```
 $ duis <PATH/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
