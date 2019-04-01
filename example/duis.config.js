@@ -41,6 +41,12 @@ module.exports = {
     opts: '--incognito'
   },
 
+  // `true` se o navegador deve ser aberto automaticamente a cada "working dir"
+  autoOpenBrowser: true,
+  
+  // `true` se deseja perguntar antes de executar algum comando definido pelo usuário
+  safeMode: true,
+
   /*************************** OPCIONAIS ***************************/
 
   // porta em que o servidor PHP tentará escutar
