@@ -1,7 +1,3 @@
-[submodule "example/CB01/vmroque"]
-	path = example/CB01/vmroque
-	url = https://github.com/vmroque/ProgWeb
-	branch = master
 [submodule "example/CB01/micalevisk"]
 	path = example/CB01/micalevisk
 	url = https://github.com/micalevisk/ProgWeb
