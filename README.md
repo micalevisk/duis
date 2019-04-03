@@ -4,9 +4,25 @@ Feito em cima do [Shelljs](https://www.npmjs.com/package/shelljs) e [inquirer](h
 
 /* TODO: finalizar descrição */
 
+<!--
+COMING SOON:
+$ duis [OPTIONS] [DIR/TO/CONFIG-FILE] <PATH/TO/TRAB-FILE> 
+
+OPTIONS:
+Todas que estão disponíveis no arquivo `.config`. Assim, o arquivo de configuração não é obrigatório. As opções da linha de comandos irão sobreescrever as definidas no arquivo de configuração.
+
+- nomes continua em **camelCase** mas são precedidos por 2 hífens; opções booleanas são usadas como "flags"
+  - > `safeMode: true` vira `--safeMode`
+
+- caso o valor seja um objeto, usar o ponto-final como separador
+  - > `browser: { name: 'chrome' }` vira `--browser.name='chrome'`
+  - > `commandsForEachParentDir: { onEnter: ['foo'], onBeforeLeave: ['bar'] }` vira `--commandsForEachParentDir.onEnter=['foo'] --commandsForEachParentDir.onBeforeLeave=['bar']`
+
+-->
+
 # Como usar
 ```
-$ duis <PATH/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
+$ duis <DIR/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
                                      |
                                      |
               relativo ao diretórío do "aluno" (AKA working dir; onde está o `.git`)
