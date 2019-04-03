@@ -1,7 +1,7 @@
 //@ts-check
 const path = require('path')
 const hshell = require('./human-shell')
-const { utils: _ } = require('../lib')
+const { utils: _, openBrowser } = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -57,6 +57,13 @@ if (config.serverPort) {
   // TODO: instanciar o server, sem "iniciá-lo", i.e., deixar o diretório a ser aberto pendente
 }
 
+if (config.browser && config.browser.name) {
+  config['openBrowserAt'] = (URL) =>
+    openBrowser(config.browser.name, URL, config.browser.opts)
+} else {
+  config['openBrowserAt'] = () => {}
+}
+
 
 function getHookFor(context) {
   return config[context]
@@ -71,7 +78,15 @@ function runHookOn(context, name) {
   if (!context || !context[name]) return;
   for (const command of context[name]) {
     //if (config.safeMode) // TODO: perguntar se deseja executar `command`
-    _.wrapSyncOutput(() => hshell.runSafe(command))
+		// FIXME: programas que esperam entrada do usuário ficam assíncronos
+    _.wrapSyncOutput(() => {
+      console.log(command)
+      try {
+        hshell.runSafe(command)
+      } catch (err) {
+        console.log(err)
+      }
+    })
   }
 }
 
@@ -127,8 +142,8 @@ for (const workingdir of workingdirs) {
   console.log(`passou[${lastCommitId}]`)
 
   // TODO: [4.4]
-
   // TODO: [4.5]
+  config.openBrowserAt('file:///' + workingdir)//§
 
   //#region [4.6]
   if (!isDev)

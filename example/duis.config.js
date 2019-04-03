@@ -43,7 +43,7 @@ module.exports = {
 
   // `true` se o navegador deve ser aberto automaticamente a cada "working dir"
   autoOpenBrowser: true,
-  
+
   // `true` se deseja perguntar antes de executar algum comando definido pelo usuário
   safeMode: true,
 
@@ -68,7 +68,7 @@ module.exports = {
   workingdirQuestions,
 
   // comandos a serem executados na linha de comandos ao entrar "diretório parent" (diretório resolvido de `workingdirParentDirPathMask`)
-  commandsForEachParentDir: {
+  _commandsForEachParentDir: {
     // antes de abrir o navegador na pasta do aluno (assim que entrar no working dir)
     onEnter: [
       'git checkout master',
