@@ -1,6 +1,7 @@
+//@ts-check
 const path = require('path')
 const hshell = require('./human-shell')
-const _ = require('../lib')
+const { utils: _ } = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -70,7 +71,7 @@ function runHookOn(context, name) {
   if (!context || !context[name]) return;
   for (const command of context[name]) {
     //if (config.safeMode) // TODO: perguntar se deseja executar `command`
-    _.wrapSyncOutput(() => hsell.runSafe(command))
+    _.wrapSyncOutput(() => hshell.runSafe(command))
   }
 }
 
@@ -100,7 +101,7 @@ for (const workingdir of workingdirs) {
   if (isDev) console.info();console.info('<---------------------');console.info(workingdir);console.info()
 
   const userCommandsHooks = getHookFor('commandsForEachParentDir')
-  
+
   const parentDirAbsPath = getParentDirFor(workingdir)
   hshell.enterOnDir(parentDirAbsPath)
 
