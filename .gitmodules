@@ -2,3 +2,7 @@
 	path = example/CB01/micalevisk
 	url = https://github.com/micalevisk/ProgWeb
 	branch = master
+[submodule "example/CB01/vmroque"]
+	path = example/CB01/vmroque
+	url = https://github.com/vmroque/ProgWeb
+	branch = master
