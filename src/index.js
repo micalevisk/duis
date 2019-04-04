@@ -143,7 +143,8 @@ for (const workingdir of workingdirs) {
 
   // TODO: [4.4]
   // TODO: [4.5]
-  config.openBrowserAt('file:///' + workingdir)//§
+  const onBrowserClose = (...args) => console.log(args)
+  config.openBrowserAt('file:///' + workingdir, onBrowserClose)//§
 
   //#region [4.6]
   if (!isDev)
