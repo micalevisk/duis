@@ -143,8 +143,7 @@ for (const workingdir of workingdirs) {
 
   // TODO: [4.4]
   // TODO: [4.5]
-  const onBrowserClose = (...args) => console.log('BROWSER FECHADO', args)
-  config.openBrowserAt('file:///' + workingdir, onBrowserClose)//§
+  config.openBrowserAt('file:///' + workingdir) // TODO: should set URL accodirng server status
   console.log('>>>>>>>>.')
   //#region [4.6]
   if (!isDev)
