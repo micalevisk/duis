@@ -6,7 +6,7 @@ Feito em cima do [Shelljs](https://www.npmjs.com/package/shelljs) e [inquirer](h
 
 <!--
 COMING SOON:
-$ duis [OPTIONS] [DIR/TO/CONFIG-FILE] <PATH/TO/TRAB-FILE> 
+$ duis [OPTIONS] [DIR/TO/CONFIG-FILE] <PATH/TO/TRAB-FILE>
 
 OPTIONS:
 Todas que estão disponíveis no arquivo `.config`. Assim, o arquivo de configuração não é obrigatório. As opções da linha de comandos irão sobreescrever as definidas no arquivo de configuração.
@@ -73,7 +73,7 @@ Iniciar processo com **`$ duis . TRAB1`**
     3. Se o id do último commit no _working dir_ for igual ao recuperado do arquivo de lookup corrente (eg. `./Turma1/.duis.lookup/nick-aluno-a.json`), significa que esse diretório já foi visto, então deve-se seguir para a próxima iteração
     4. Se `CONFIG#serverPort` estiver definido, então, fazer:
         1. Criar um servidor PHP no _working dir_
-        2. Abrir o navegador definido em `CONFIG#browser` na raiz do server (se `CONFIG#autoOpenBrowser` for `true`)
+        2. Abrir o navegador definido em `CONFIG#browser` na raiz do server local (se `CONFIG#autoOpenBrowser` for `true`)
     5. Senão, abrir o navegador em _working dir_ (se `CONFIG#autoOpenBrowser` for `true`)
     6. Se existir o arquivo de teste associado ao "trabalho" corrente, fazer:
         1. Perguntar se deseja executar o comando definido em `CONFIG#test.commandToRun` (eg. `testcafe -sf chrome:headless ./Turma1/__tests__/TRAB1.test.js`)
