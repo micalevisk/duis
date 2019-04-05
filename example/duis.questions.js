@@ -1,9 +1,5 @@
 // ref: https://www.npmjs.com/package/inquirer#prompt
-
-/*
-Convenções para este arquivo:
-`name` = nome da célula
-*/
+const inquirer = require('inquirer')
 
 const lookupsForLabels = {
   'Exato': 'exato',
