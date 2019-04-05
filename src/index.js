@@ -58,8 +58,8 @@ if (config.serverPort) {
 }
 
 if (config.browser && config.browser.name) {
-  config['openBrowserAt'] = (URL, onClose) =>
-    openBrowser({ name: config.browser.name, path: URL, opts: config.browser.opts, onClose })
+  config['openBrowserAt'] = (URL, onProcessClose) =>
+    openBrowser({ name: config.browser.name, path: URL, opts: config.browser.opts, onProcessClose })
 } else {
   config['openBrowserAt'] = () => {}
 }
