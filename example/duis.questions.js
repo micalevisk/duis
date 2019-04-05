@@ -5,39 +5,31 @@ Convenções para este arquivo:
 `name` = nome da célula
 */
 
-const exercicioEntregue = anwsers => anwsers['criterio_F'] === false
-
-const questao = (name, message) => ({ name, message, when: exercicioEntregue })
-
+const lookupsForLabels = {
+  'Exato': 'exato',
+  'Exato com "extra"': 'exato_extra',
+  'Incorreto': 'incorreto',
+  'Plágio': 'plagio',
+  'Suspeito de plágio': 'suspeito',
+}
 
 module.exports = [
   {
-    type: 'confirm',
-    name: 'criterio_F',
-    message: 'não entregue ou totalmente fora do esperado',
-    default: false,
-  },
-  {
-    type: 'confirm',
-    ...questao('criterio_A', 'visualmente de acordo com o slide do exercício'),
-  },
-  {
-    type: 'confirm',
-    ...questao('criterio_B', 'código usando o que foi solicitado'),
-  },
-  {
-    type: 'confirm',
-    ...questao('criterio_C', 'código usando algo a mais do que foi solicitado'),
-    default: false,
-  },
-  {
-    type: 'confirm',
-    ...questao('criterio_D', 'plágio ou cópia'),
-    default: false,
-  },
-  {
-    type: 'confirm',
-    ...questao('criterio_E', 'suspeito de plágio'),
-    default: false,
+    type: 'list',
+    name: 'cell:nota',
+    message: 'Avaliação',
+    choices: [
+      new inquirer.Separator('-- visual e código como o esperado --'),
+      'Exato',
+      'Exato com "extra"',
+      'Plágio',
+      'Suspeito de plágio',
+      new inquirer.Separator(),
+      'Incorreto',
+    ],
+    default: 'Exato',
+    filter: function(choice) {
+      return lookupsForLabels[choice]
+    }
   },
 ]
