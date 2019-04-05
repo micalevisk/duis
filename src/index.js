@@ -58,8 +58,16 @@ if (config.serverPort) {
 }
 
 if (config.browser && config.browser.name) {
-  config['openBrowserAt'] = (URL, onProcessClose) =>
-    openBrowser({ name: config.browser.name, path: URL, opts: config.browser.opts, onProcessClose })
+  config['openBrowserAt'] = (URL, onProcessClose) => {
+    const createBrowserProcess = openBrowser.bind(openBrowser, {
+      name: config.browser.name,
+      path: URL,
+      opts: config.browser.opts, onProcessClose,
+    })
+
+    if (config.autoOpenBrowser) return createBrowserProcess
+    // TODO: perguntar
+  }
 } else {
   config['openBrowserAt'] = () => {}
 }
@@ -142,9 +150,11 @@ for (const workingdir of workingdirs) {
   console.log(`passou[${lastCommitId}]`)
 
   // TODO: [4.4]
+  config.openBrowserAt()
+
   // TODO: [4.5]
-  config.openBrowserAt('file:///' + workingdir) // TODO: should set URL accodirng server status
-  console.log('>>>>>>>>.')
+  config.openBrowserAt('file:///' + workingdir)
+
   //#region [4.6]
   if (!isDev)
   if (config.commandOnTest) {
