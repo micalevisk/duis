@@ -58,8 +58,8 @@ if (config.serverPort) {
 }
 
 if (config.browser && config.browser.name) {
-  config['openBrowserAt'] = (URL) =>
-    openBrowser(config.browser.name, URL, config.browser.opts)
+  config['openBrowserAt'] = (URL, onClose) =>
+    openBrowser({ name: config.browser.name, path: URL, opts: config.browser.opts, onClose })
 } else {
   config['openBrowserAt'] = () => {}
 }
@@ -143,9 +143,9 @@ for (const workingdir of workingdirs) {
 
   // TODO: [4.4]
   // TODO: [4.5]
-  const onBrowserClose = (...args) => console.log(args)
+  const onBrowserClose = (...args) => console.log('BROWSER FECHADO', args)
   config.openBrowserAt('file:///' + workingdir, onBrowserClose)//§
-
+  console.log('>>>>>>>>.')
   //#region [4.6]
   if (!isDev)
   if (config.commandOnTest) {
