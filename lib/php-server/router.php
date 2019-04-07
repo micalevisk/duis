@@ -2,7 +2,7 @@
 
 $URI = urldecode($_SERVER['REQUEST_URI']);
 
-$f = preg_replace('/\/$/', '', __DIR__ . "{$URI}");
+$f = preg_replace('/\/$/', '', $_SERVER['DOCUMENT_ROOT'] . "{$URI}");
 if (!is_dir($f)) return false;
 
 if ($URI != '/' && $URI != '//')
