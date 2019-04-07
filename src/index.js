@@ -1,7 +1,7 @@
 //@ts-check
 const path = require('path')
 const hshell = require('./human-shell')
-const { utils: _, openBrowser } = require('../lib')
+const { utils: _, openBrowser, PHPServer } = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -67,6 +67,16 @@ if (config.browser && config.browser.name) {
   }
 } else {
   config['openBrowserAt'] = () => {}
+}
+
+if (config.serverPort) {
+  const phpServer = new PHPServer({host: 'localhost', port: config.serverPort})
+
+  config['initServer'] = function initServer(docroot, onProcessClose = (...args) => {}) {
+    phpServer.initServer(docroot).terminal.on('close', onProcessClose)
+    _.addHandlerToSIGINT(phpServer.shutDown) // making sure the server will close
+    return phpServer
+  }
 }
 
 
@@ -156,9 +166,9 @@ for (const workingdirAbsPath of workingdirs) {
   //#endregion
 
   //#region [4.5]
-  if (config.serverPort) {
-    // const serverHostname =
-    // config.openBrowserAt(serverHostname)
+  if (config.initServer) {
+    const serverAddress = 'http://' + config.initServer(workingdirAbsPath).hostaddress
+    config.openBrowserAt(serverAddress)
   }
   //#endregion
 
