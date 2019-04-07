@@ -5,19 +5,37 @@ $URI = urldecode($_SERVER['REQUEST_URI']);
 $f = preg_replace('/\/$/', '', $_SERVER['DOCUMENT_ROOT'] . "{$URI}");
 if (!is_dir($f)) return false;
 
+/**
+* Builds a file path with the appropriate directory separator.
+* @param string $segments,... unlimited number of path segments
+* @return string Path
+*/
+function file_build_path(...$segments) {
+  return join(DIRECTORY_SEPARATOR, $segments);
+}
+
+$bootstrap_files = [
+  file_build_path($f, 'index.html'),
+  file_build_path($f, 'index.php'),
+];
+
+foreach ($bootstrap_files as $bf) {
+  if (is_readable($bf)) {
+    return false;
+  }
+}
+
+
 if ($URI != '/' && $URI != '//')
   echo "<a href='" . urlencode(dirname($URI)) . "'>..</a><br>";
 
 $abf = preg_replace('/^\/+|\/$/', '', $URI);
 $fs = glob("$f/*");
 foreach ($fs as $one) {
-  // FIXME: não renderiza o `index`
-  // if (preg_match('/^index\./i', basename($one))) {
-  //   header('Location: '.$f);
-  // }
-
   $one = str_replace($f.'/', '', $one);
-  echo "<a href='" . urlencode("$abf/$one") . "'>$one</a><br/>";
+  $encoded_path = preg_replace('/^\/+/', '', "$abf/$one");
+
+  echo "<a href='" . urlencode($encoded_path) . "'>$one</a><br/>";
 }
 
 return true;
