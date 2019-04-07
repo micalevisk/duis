@@ -5,7 +5,7 @@ const { utils: _, openBrowser } = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
 
-// if (isDev) hshell.set('-v')
+if (isDev) hshell.set('-v')
 hshell.config.silent = true
 
 const pathJoinWithRoot = path.join.bind(null, __dirname, '..', './example')
@@ -19,12 +19,12 @@ const config = _.requireUpdated(CONFIG_PATH)
 // respostas com as keys (name) com letras maiúsculas
 const startVariables = { TURMA: 'CB01', NICK_ALUNO: '*' }
 // respostas restantes
-config['startAnswers'] = { commitLimitDate: '2019-03-31' }
+config['startAnswers'] = { commitLimitDate: new Date().toISOString().substr(0, 10) }
 
 // resolvido após responder as perguntas de setup
 const workingdirParentDirPathMask = _.t(config.workingdirParentDirPathMask, startVariables)
 const workingdirsDirAbsPath = pathJoinWithRoot(workingdirParentDirPathMask)
-const entryDirPath = 'PHP1/' // o primeiro arg passado ao `duis` CLI
+const entryDirPath = _.trimPathSeparator('HTML/') // o primeiro arg passado ao `duis` CLI
 
 const lookupDirPath = _.t(config.lookupDirPathMask, startVariables)
 const lookupDirAbsPath = pathJoinWithRoot(lookupDirPath)
@@ -37,7 +37,7 @@ if (config.test && config.test.commandToRun) {
     const commandToTest = config.test.commandToRun
     const fileExtName = config.test.fileExtName || ''
 
-    function commandOnTest(testFilename, ...args) {
+    config['commandOnTest'] = function commandOnTest(testFilename, ...args) {
       const fileToTestAbsPath = path.format({
         dir: testsDirAbsPath,
         base: testFilename + fileExtName
@@ -46,26 +46,23 @@ if (config.test && config.test.commandToRun) {
       if (hshell.isReadableFile(fileToTestAbsPath))
         return `${commandToTest} ${fileToTestAbsPath} ${args.join(' ')}`
     }
-
-    config['commandOnTest'] = commandOnTest
   }
 
   delete config['test']
 }
 
-if (config.serverPort) {
-  // TODO: instanciar o server, sem "iniciá-lo", i.e., deixar o diretório a ser aberto pendente
-}
-
 if (config.browser && config.browser.name) {
-  config['openBrowserAt'] = (URL, onProcessClose) => {
+  config['openBrowserAt'] = function openBrowserAt(URL, onProcessClose) {
     const createBrowserProcess = openBrowser.bind(openBrowser, {
       name: config.browser.name,
       path: URL,
       opts: config.browser.opts, onProcessClose,
     })
 
-    if (config.autoOpenBrowser) return createBrowserProcess
+    if (config.autoOpenBrowser) {
+      return createBrowserProcess()
+    }
+
     // TODO: perguntar
   }
 } else {
@@ -78,8 +75,8 @@ function getHookFor(context) {
 }
 
 
-function getParentDirFor(wdAbs) {
-  return path.join(wdAbs, ('..' + path.sep).repeat(config.levelsToParentDir))
+function getRootDirForWorkingdir(wdAbs) {
+  return path.join(wdAbs, ('..' + path.sep).repeat(config.levelsToRootDir))
 }
 
 function runHookOn(context, name) {
@@ -98,6 +95,11 @@ function runHookOn(context, name) {
   }
 }
 
+function getLastCommit({ until, parent = 'remotes/origin/master', ref = '.' }) {
+  return  hshell
+    .runSafe(`git rev-list -1 --until="${until}" --abbrev-commit ${parent} ${ref}`)
+}
+
 /******************************************************************************/
 
 
@@ -111,49 +113,57 @@ delete config['lookupDirPathMask']
 config['lookupDirAbsPath'] = lookupDirAbsPath
 
 
-// console.dir(config, {depth: null})
-
 //#region [3]
 hshell.createDirIfNotExists(config.lookupDirAbsPath)
 //#endregion
 
-const workingdirs = hshell.listDirectoriesFrom( path.join(workingdirsDirAbsPath, entryDirPath) )
+//#region [4]
+const resolvedWorkindirsPath = path.join(config.workingdirsDirAbsPath, entryDirPath)
+const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath)
+//#endregion
 
+for (const workingdirAbsPath of workingdirs) {
+  if (isDev) console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info()
 
-for (const workingdir of workingdirs) {
-  if (isDev) console.info();console.info('<---------------------');console.info(workingdir);console.info()
+  const userCommandsHooks = getHookFor('commandsForEachRootDir')
 
-  const userCommandsHooks = getHookFor('commandsForEachParentDir')
-
-  const parentDirAbsPath = getParentDirFor(workingdir)
-  hshell.enterOnDir(parentDirAbsPath)
+  //#region [4.1]
+  const rootDirAbsPath = getRootDirForWorkingdir(workingdirAbsPath)
+  hshell.enterOnDir(rootDirAbsPath)
+  //#endregion
 
   //#region [4.2]
   runHookOn(userCommandsHooks, 'onEnter')
   //#endregion
 
   //#region [4.3]
-  const parentDirName = path.basename(parentDirAbsPath)
-  const parentLookupDirAbsPath = path.join(lookupDirAbsPath, parentDirName + '.json')
+  hshell.enterOnDir(workingdirAbsPath)
   //#endregion
 
-  //#region [4.1]
-  hshell.enterOnDir(workingdir)
+  //#region [4.4]
+  const rootDirName = path.basename(rootDirAbsPath)
+  const rootLookupDirAbsPath = path.join(lookupDirAbsPath, rootDirName + '.json')
+
+  const rootLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
+  if (!rootLastCommitId.trim()) throw Error(`Nenhuma commit feito em: ${workingdirAbsPath}`)
+
+  const currLookup = _.loadJSON(rootLookupDirAbsPath)
+  if (currLookup._id === rootLastCommitId) continue
+  console.log(`passou[${rootLastCommitId}]`)
+
+  const currStoredRelease = _.getDeepValue(currLookup, ['releases', entryDirPath])
+  if (currStoredRelease && currStoredRelease._id === rootLastCommitId) continue
   //#endregion
 
-  //#region [4.3]
-  const lastCommitId = hshell.runSafe(`git rev-list -1 --until="${config.startAnswers.commitLimitDate}" --abbrev-commit remotes/origin/master`)
-  const currLookup = _.loadJSON(parentLookupDirAbsPath)
-  if (currLookup.id === lastCommitId) continue
+  //#region [4.5]
+  if (config.serverPort) {
+    // const serverHostname =
+    // config.openBrowserAt(serverHostname)
+  }
   //#endregion
-
-  console.log(`passou[${lastCommitId}]`)
-
-  // TODO: [4.4]
-  config.openBrowserAt()
 
   // TODO: [4.5]
-  config.openBrowserAt('file:///' + workingdir)
+  // config.openBrowserAt('file:///' + workingdir)
 
   //#region [4.6]
   if (!isDev)

@@ -2,6 +2,7 @@
 const inquirer = require('inquirer')
 
 const lookupsForLabels = {
+  'Quase como o esperado': 'quase',
   'Exato': 'exato',
   'Exato com "extra"': 'exato_extra',
   'Incorreto': 'incorreto',
@@ -16,6 +17,7 @@ module.exports = [
     message: 'Avaliação',
     choices: [
       new inquirer.Separator('-- visual e código como o esperado --'),
+      'Quase como o esperado',
       'Exato',
       'Exato com "extra"',
       'Plágio',
@@ -28,4 +30,11 @@ module.exports = [
       return lookupsForLabels[choice]
     }
   },
+  {
+    type: 'input',
+    name: 'note:faltou',
+    message: 'O que faltou? (separar por `;`)',
+    when: answsers => answsers['cell:nota'] === 'quase',
+    filter: answser => answser.split(';').map(a => a.trim()),
+  }
 ]

@@ -16,12 +16,18 @@ const open = require('open');
 
   console.log('vai abrir')
 
+  /*
   await open('https://google.com', {
     wait: true,
     app: ['google-chrome', '--incognito'],
   });
 
   console.log('fechou')
+  */
+
+  const b = await open('https://google.com', {app: ['google-chrome', '--incognito']})
+  b.once('close', console.log.bind(null, 'fechou'))
+  console.log('abriu')
 
   } catch (err) {
     console.log(err)

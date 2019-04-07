@@ -16,7 +16,7 @@ Todas que estão disponíveis no arquivo `.config`. Assim, o arquivo de configur
 
 - caso o valor seja um objeto, usar o ponto-final como separador
   - > `browser: { name: 'chrome' }` vira `--browser.name='chrome'`
-  - > `commandsForEachParentDir: { onEnter: ['foo'], onBeforeLeave: ['bar'] }` vira `--commandsForEachParentDir.onEnter=['foo'] --commandsForEachParentDir.onBeforeLeave=['bar']`
+  - > `commandsForEachRootDir: { onEnter: ['foo'], onBeforeLeave: ['bar'] }` vira `--commandsForEachRootDir.onEnter=['foo'] --commandsForEachRootDir.onBeforeLeave=['bar']`
 
 -->
 
@@ -31,7 +31,7 @@ $ duis <DIR/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
 ## Demo
 
 <details>
-<summary>Exemplo de árvore do diretório a ser trabalhado</summary>
+  <summary>Exemplo de árvore do diretório a ser trabalhado</summary>
 
 ```bash
 .
@@ -54,11 +54,7 @@ $ duis <DIR/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
 </details>
 
 <details>
-<summary>Exemplo do arquivo de configuração</summary>
-
-```js
-```
-
+  <summary>Exemplo do arquivo de configuração</summary>
 </details>
 <br>
 
@@ -67,37 +63,45 @@ Iniciar processo com **`$ duis . TRAB1`**
 1. Carregar as configurações expostas no arquivo `duis.config.js` do diretório corrente (se não existir: _exit 1_)
 2. Fazer as perguntas definidas em `CONFIG#startQuestions`, para adicionar mais valores ao estado inicial
 3. Criar o diretório definido em `CONFIG#lookupDirPathMask`, se ele já não existir
-4. Para cada diretório resolvido com a junção de `CONFIG#workingdirParentDirPathMask` (renderizado) e `<PATH/TO/TRAB-FILE>` (eg. `TRAB1`), fazer:
-    1. Definir o diretório resolvido como _working dir_ corrente (eg. `./Turma1/nick-aluno-a/TRAB1`) ~ caminho absoluto
-    2. Executar os comandos definidos em `CONFIG#commandsForEachParentDir.onEnter`
-    3. Se o id do último commit no _working dir_ for igual ao recuperado do arquivo de lookup corrente (eg. `./Turma1/.duis.lookup/nick-aluno-a.json`), significa que esse diretório já foi visto, então deve-se seguir para a próxima iteração
-    4. Se `CONFIG#serverPort` estiver definido, então, fazer:
+4. Para cada diretório resolvido da junção de `CONFIG#workingdirParentDirPathMask` (renderizado) e `<PATH/TO/TRAB-FILE>` (eg. `TRAB1`), tratá-lo como _working dir_ e fazer:
+    1. Entrar no diretório "root" do _working dir_ corrente
+    2. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onEnter`
+    3. Entrar no diretório _working dir_ corrente (eg. `./Turma1/nick-aluno-a/TRAB1`)
+    4. Se o id do último commit no _working dir_ for igual ao recuperado do arquivo de lookup corrente (eg. `./Turma1/.duis.lookup/nick-aluno-a.json`), significa que esse diretório já foi visto, então:
+        1. Se tiver uma entrada para `<PATH/TO/TRAB-FILE>` em `.releases` do arquivo de lookup **e** o id deste for igual ao último commit do _working dir_, então esse "trabalho" não foi atualizado, deve-se pular essa iteração
+        2. Senão, continuar o processo
+    5. Se `CONFIG#serverPort` estiver definido, então:
         1. Criar um servidor PHP no _working dir_
         2. Abrir o navegador definido em `CONFIG#browser` na raiz do server local (se `CONFIG#autoOpenBrowser` for `true`)
+
     5. Senão, abrir o navegador em _working dir_ (se `CONFIG#autoOpenBrowser` for `true`)
-    6. Se existir o arquivo de teste associado ao "trabalho" corrente, fazer:
+    6. Se existir o arquivo de teste associado ao "trabalho" corrente, então:
         1. Perguntar se deseja executar o comando definido em `CONFIG#test.commandToRun` (eg. `testcafe -sf chrome:headless ./Turma1/__tests__/TRAB1.test.js`)
         2. Executar o comando para (teoricamente) executar os testes
     7. Fazer as perguntas definidas no `CONFIG#workingdirQuestions` (perguntando antes de executar cada, se `CONFIG#safeMode` for `true`)
     8. Esperar a resposta da pergunta "Finalizar avaliação deste aluno (`<studentGitRepoDirName>`)?"
         1. Atualizar o arquivo de lookup correspondente
-        2. Parar o servidor
-        3. Executar os comandos definidos em `CONFIG#commandsForEachParentDir.onBeforeLeave`
+        2. Parar o servidor (se iniciado)
+        3. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onBeforeLeave`
 
 ## Formato do arquivo de "lookup" gerado pra cada _working dir_
 > o nome do arquivo deve ser o mesmo do diretório git em que o `working dir` está
 
 ```json
 {
-  "id": "<HEAD_COMMIT_ID>", // apenas os 8 primeiros caracteres
+  "_id": "<HEAD_COMMIT_ID>", // último commit que atualizou esse arquivo
   "releases": {
-    "<TRABNAME_CORRIGIDO>": [
-      {
-        "q": "<QUESTION_NAME>",
-        "a": "<ANSWER>"
-      },
-      // ...
-    ]
+    "<TRABNAME_CORRIGIDO>": {
+      "_id": "<TRABNAME_CORRIGIDO_COMMIT_ID>", // commit que gerou os `prompts` abaixo
+      "prompts": [ // perguntas e respostas das questões definidas em `CONFIG#workingdirQuestions`
+        {
+          "q": "<QUESTION_NAME>",
+          "a": "<ANSWER>"
+        },
+        // ...
+      ]
+    }
+    // ...
   }
 }
 ```
