@@ -1,5 +1,6 @@
 //@ts-check
 const path = require('path')
+const inquirer = require('inquirer')
 const hshell = require('./human-shell')
 const { utils: _, openBrowser, PHPServer } = require('../lib')
 
@@ -132,6 +133,17 @@ const resolvedWorkindirsPath = path.join(config.workingdirsDirAbsPath, entryDirP
 const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath)
 //#endregion
 
+/**
+ * @param {inquirer.Question} question
+ */
+async function askUntilReturnTrue(question) {
+  const { [question.name]: repeat } = await inquirer.prompt(question);
+  return repeat ? repeat : askUntilReturnTrue(question)
+}
+
+
+;(async () => {
+
 for (const workingdirAbsPath of workingdirs) {
   if (isDev) console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info()
 
@@ -192,6 +204,14 @@ for (const workingdirAbsPath of workingdirs) {
   // TODO: [4.7]
 
   // TODO: [4.8]
+  await askUntilReturnTrue({
+    name: 'proceed',
+    type: 'list',
+    message: 'Finalizar avaliação deste aluno?',
+    choices: ['sim', 'não'],
+    default: 'sim',
+    filter: input => input === 'sim'
+  })
 
   /*
   _.writeJSON(parentLookupDirAbsPath, { id: lastCommitId, })
@@ -200,5 +220,7 @@ for (const workingdirAbsPath of workingdirs) {
   */
 
 }
+
+})();
 
 // console.dir(config, {depth: null})
