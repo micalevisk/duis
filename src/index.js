@@ -91,13 +91,14 @@ function getRootDirForWorkingdir(wdAbs) {
 }
 
 function runHookOn(context, name) {
+  const child_process = require('child_process')
   if (!context || !context[name]) return;
   for (const command of context[name]) {
     //if (config.safeMode) // TODO: perguntar se deseja executar `command`
-		// FIXME: programas que esperam entrada do usuário ficam assíncronos
     _.wrapSyncOutput(() => {
       console.log(command)
       try {
+        // if `command` needs to read from stdin, this not work properly in `set -v`
         hshell.runSafe(command)
       } catch (err) {
         console.log(err)
@@ -204,13 +205,11 @@ for (const workingdirAbsPath of workingdirs) {
   // TODO: [4.7]
 
   // TODO: [4.8]
-  await askUntilReturnTrue({
+  await inquirer.prompt({
     name: 'proceed',
     type: 'list',
     message: 'Finalizar avaliação deste aluno?',
-    choices: ['sim', 'não'],
-    default: 'sim',
-    filter: input => input === 'sim'
+    choices: ['sim'],
   })
 
   /*

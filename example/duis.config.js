@@ -67,7 +67,7 @@ module.exports = {
   /*************************** OPCIONAIS ***************************/
 
   // porta em que o servidor PHP tentará escutar
-  serverPort: 8080,
+  _serverPort: 8080,
 
   test: {
     // como devem terminar os arquivos de testes, i.e, a extensão deles
