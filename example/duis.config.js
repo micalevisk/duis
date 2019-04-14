@@ -1,4 +1,11 @@
-/*
+/**************************************************************************************************
+██████╗ ███████╗███████╗ ██████╗██████╗ ██╗██████╗ ████████╗██╗ ██████╗ ███╗   ██╗
+██╔══██╗██╔════╝██╔════╝██╔════╝██╔══██╗██║██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║
+██║  ██║█████╗  ███████╗██║     ██████╔╝██║██████╔╝   ██║   ██║██║   ██║██╔██╗ ██║
+██║  ██║██╔══╝  ╚════██║██║     ██╔══██╗██║██╔═══╝    ██║   ██║██║   ██║██║╚██╗██║
+██████╔╝███████╗███████║╚██████╗██║  ██║██║██║        ██║   ██║╚██████╔╝██║ ╚████║
+╚═════╝ ╚══════╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═╝        ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+
 workingdir = diretório que será alvo da correção
   - será aberto pelo browser e servido como document root pelo servidor PHP
   - junção do `workingdirParentDirPathMask` e caminho pro diretório do trabalho a ser corrigido
@@ -13,7 +20,7 @@ root dir = diretório que contém o `.git`
   - estará no mesmo nível que os demais diretórios git (de outros alunos), portanto deve ser único
   - o nome desse dir. será usado como nome do arquivo de lookup
   - a variável `levelsToRootDir` indica seu caminho em relação ao `workingdir`
-*/
+**************************************************************************************************/
 
 const workingdirQuestions = require('./duis.questions')
 
@@ -36,11 +43,18 @@ const startQuestions = [
     name: 'commitLimitDate',
     default: new Date().toISOString().substr(0, 10),
     message: 'Data máxima dos commits [AAAA-DD-MM]',
-    validate: value => !!value.trim() ? (/^\d{4}-\d{2}-\d{2}$/).test(value) : 'Formato inválido'
+    validate: value => !!value.trim() ? (/^\d{4}-\d{2}-\d{2}$/).test(value) : '' // bypass if is empty
   },
 ]
 
-// configuração default
+
+// ██████╗ ██████╗ ███╗   ██╗███████╗██╗ ██████╗ ███████╗
+// ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝ ██╔════╝
+// ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗███████╗
+// ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║╚════██║
+// ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝███████║
+//  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
+
 module.exports = {
 
   // template do diretório que registrará as correções realizadas
@@ -59,9 +73,9 @@ module.exports = {
   },
 
   // `true` se o navegador deve ser aberto automaticamente a cada "working dir"
-  autoOpenBrowser: true,
+  autoOpenBrowser: false,
 
-  // `true` se deseja perguntar antes de executar algum comando definido pelo usuário
+  // `true` para sempre confirmar a execução de comandos definido pelo usuário
   safeMode: true,
 
   /*************************** OPCIONAIS ***************************/
@@ -85,7 +99,7 @@ module.exports = {
   workingdirQuestions,
 
   // comandos a serem executados na linha de comandos no diretório "root" (git directory)
-  _commandsForEachRootDir: {
+  commandsForEachRootDir: {
     // antes de abrir o navegador na pasta do aluno (assim que entrar no working dir)
     onEnter: [
       'git checkout master',

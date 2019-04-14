@@ -6,7 +6,7 @@ Feito em cima do [Shelljs](https://www.npmjs.com/package/shelljs) e [inquirer](h
 
 <!--
 COMING SOON:
-$ duis [OPTIONS] [DIR/TO/CONFIG-FILE] <PATH/TO/TRAB-FILE>
+$ duis [OPTIONS] <PATH/TO/TRAB-FILE> [PATH/TO/CONFIG-FILE]
 
 OPTIONS:
 Todas que estão disponíveis no arquivo `.config`. Assim, o arquivo de configuração não é obrigatório. As opções da linha de comandos irão sobreescrever as definidas no arquivo de configuração.
@@ -22,10 +22,10 @@ Todas que estão disponíveis no arquivo `.config`. Assim, o arquivo de configur
 
 # Como usar
 ```
-$ duis <DIR/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
-                                     |
-                                     |
-              relativo ao diretórío do "aluno" (AKA working dir; onde está o `.git`)
+$ duis <PATH/TO/TRAB-FILE> [PATH/TO/CONFIG-FILE]
+               |
+               |
+  relativo ao diretórío do "aluno" (AKA working dir; onde está o `.git`)
 ```
 
 ## Demo
@@ -58,7 +58,7 @@ $ duis <DIR/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
 </details>
 <br>
 
-Iniciar processo com **`$ duis . TRAB1`**
+Iniciar processo com **`$ duis TRAB1 .`**
 
 1. Carregar as configurações expostas no arquivo `duis.config.js` do diretório corrente (se não existir: _exit 1_)
 2. Fazer as perguntas definidas em `CONFIG#startQuestions`, para adicionar mais valores ao estado inicial
@@ -72,14 +72,14 @@ Iniciar processo com **`$ duis . TRAB1`**
         2. Senão, continuar o processo
     5. Se `CONFIG#serverPort` estiver definido, então:
         1. Criar um servidor PHP no _working dir_
-        2. Abrir o navegador definido em `CONFIG#browser` na raiz do server local (se `CONFIG#autoOpenBrowser` for `true`)
-
-    5. Senão, abrir o navegador em _working dir_ (se `CONFIG#autoOpenBrowser` for `true`)
-    6. Se existir o arquivo de teste associado ao "trabalho" corrente, então:
+        2. Abrir o navegador definido em `CONFIG#browser` na raiz do server local
+    6. Senão, abrir o navegador em _working dir_
+    7. Se existir o arquivo de teste associado ao "trabalho" corrente, então:
         1. Perguntar se deseja executar o comando definido em `CONFIG#test.commandToRun` (eg. `testcafe -sf chrome:headless ./Turma1/__tests__/TRAB1.test.js`)
         2. Executar o comando para (teoricamente) executar os testes
     7. Fazer as perguntas definidas no `CONFIG#workingdirQuestions` (perguntando antes de executar cada, se `CONFIG#safeMode` for `true`)
     8. Esperar a resposta da pergunta "Finalizar avaliação deste aluno (`<studentGitRepoDirName>`)?"
+
         1. Atualizar o arquivo de lookup correspondente
         2. Parar o servidor (se iniciado)
         3. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onBeforeLeave`
