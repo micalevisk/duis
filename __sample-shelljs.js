@@ -1,8 +1,8 @@
 //const child_process = require('child_process')
 //child_process.execFileSync('npm', ['init'], {stdio: 'inherit'});
 
-const shell = require('shelljs');
-/* 
+const shell = require('shelljs')
+/*
 if (!shell.which('git')) {
   shell.echo('Sorry, this script requires git');
   shell.exit(1);
@@ -16,7 +16,15 @@ if (!shell.which('git')) {
 //const x  = shell.exec('git --git-dir "./.git" rev-parse --short master', {silent:true});
 
 // git --git-dir './foo/.git'  git rev-list -1 --before="2019-03-27T00:59:59" --abbrev-commit master
-const x  = shell.exec('git --git-dir "./.git" rev-list -1 --until="2019-03-27" --abbrev-commit master', {silent:true}); // HASH do ultimo commit antes do dia 28/03
-console.log('[stdout]', x.stdout)
-console.log('[stderr]', x.stderr)
-console.log('[code]', x.code)
+// const x  = shell.exec('git --git-dir "./.git" rev-list -1 --until="2019-03-27" --abbrev-commit master', {silent:true}); // HASH do ultimo commit antes do dia 28/03
+// console.log('[stdout]', x.stdout)
+// console.log('[stderr]', x.stderr)
+// console.log('[code]', x.code)
+;(async function() {
+  // const x  = await shell.exec('read -p "test: "');
+  const child_process = require('child_process')
+  // const x  = child_process.execSync('git --git-dir ./example/CB01/micalevisk/.git pull origin master', {stdio: 'inherit'});
+  const x = shell.exec('git --git-dir ./example/CB01/micalevisk/.git pull origin master')
+  // child_process.execFileSync('npm', ['init'], {stdio: 'inherit'});
+  console.log(x)
+})()

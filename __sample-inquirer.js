@@ -139,8 +139,59 @@ function print(answers) {
   print(answers)
 })()
 */
-
+/*
 (async function() {
   answers = await inquirer.prompt(require('./example/duis.questions.js'))
   print(answers)
+})()
+*/
+
+;(async function() {
+
+async function askUntilReturnTrue(question) {
+  const { [question.name]: repeat } = await inquirer.prompt(question);
+  return repeat ? repeat : askUntilReturnTrue(question)
+}
+
+function prompt(props) {
+  return new Proxy({}, {
+    get(_, propName) {
+      return (otherProps) =>
+        inquirer.prompt({
+          name: 'reply',
+          type: propName,
+          ...props,
+          ...otherProps
+        })
+    },
+  })
+}
+
+const p = new Proxy({}, {
+  get(_, propName) {
+
+  }
+})
+
+console.log('>>>>>')
+const x = await prompt({
+  // name: 'proceed',
+  message: 'Finalizar avaliação deste aluno?'
+}).list({ choices: ['sim'] })
+console.log('<<<<<', x)
+
+/*
+const proceed = await askUntilReturnTrue({
+  name: 'proceed',
+  type: 'list',
+  message: 'Finalizar avaliação deste aluno?',
+  choices: ['sim', 'não'],
+  default: 'sim',
+  filter: input => input === 'sim'
+})
+
+console.log('>>', proceed)
+*/
+
+
 })()

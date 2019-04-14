@@ -2,9 +2,9 @@
   "name": "duis",
   "version": "1.0.0",
   "description": "Ferramenta para otimizar o processo de correção de trabalhos, automatizando etapas constantes.",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node .",
+    "start": "NODE_ENV=production node .",
     "dev": "nodemon --inspect-brk ."
   },
   "keywords": [],

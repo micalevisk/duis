@@ -99,7 +99,7 @@ module.exports = {
   workingdirQuestions,
 
   // comandos a serem executados na linha de comandos no diretório "root" (git directory)
-  commandsForEachRootDir: {
+  _commandsForEachRootDir: {
     // antes de abrir o navegador na pasta do aluno (assim que entrar no working dir)
     onEnter: [
       'git checkout master',

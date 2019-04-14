@@ -1,10 +1,10 @@
 const path = require('path')
 const hshell = require('./human-shell')
-const { utils: _, log, openBrowser, PHPServer } = require('../lib')
+const { utils: _, sty, openBrowser, PHPServer } = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
 
-// if (isDev) hshell.set('-v')
+if (isDev) hshell.set('-v')
 hshell.config.silent = true
 
 const pathJoinWithRoot = path.join.bind(null, __dirname, '..', './example')//§
@@ -31,7 +31,7 @@ config['startAnswers'] = { commitLimitDate: new Date().toISOString().substr(0, 1
 // resolvido após responder as perguntas de setup
 const workingdirParentDirPathMask = _.t(config.workingdirParentDirPathMask, startVariables)
 const workingdirsDirAbsPath = pathJoinWithRoot(workingdirParentDirPathMask)
-const entryDirPath = _.trimPathSeparator('PHP1/') // o primeiro arg passado ao `duis` CLI
+const entryDirPath = _.trimPathSeparator('PHP1') // o primeiro arg passado ao `duis` CLI
 
 const lookupDirPath = _.t(config.lookupDirPathMask, startVariables)
 const lookupDirAbsPath = pathJoinWithRoot(lookupDirPath)
@@ -83,8 +83,8 @@ if (config.browser && config.browser.name) {
     }
 
     const { reply: canOpenBrowser } = await _.prompt(
-      `Abrir o navegador ${log.other(browserName)} em ${log.info(URL)}`
-    ).confirm()
+      sty`Abrir o navegador {yellow ${browserName}} em {blue ${URL}}`
+    ).list({ choices: ['sim', 'não'], filter: input => input === 'sim' })
 
     if (canOpenBrowser) {
       return createBrowserProcess()
@@ -131,7 +131,7 @@ function getLastCommit({ until = '', parent = 'remotes/origin/master', ref = '.'
 }
 
 async function confirmExecution(command, props = {}) {
-  return _.prompt(`Executar ${log.error(command)}`)
+  return _.prompt(`Executar ${sty.danger(command)}`)
     .confirm(props)
 }
 
@@ -165,38 +165,47 @@ async function runHookOn(context, name) {
 // ██║  ██║╚██████╔╝██║ ╚████║
 // ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 
-// if (!isDev) { !hshell.hasProgram('git') && process.exit(1); }
+;(async function() {
 
+  //#region [3]
+  hshell.createDirIfNotExists(config.lookupDirAbsPath)
+  //#endregion
 
-//#region [3]
-hshell.createDirIfNotExists(config.lookupDirAbsPath)
-//#endregion
+  //#region [4]
+  const resolvedWorkindirsPath = path.join(config.workingdirsDirAbsPath, entryDirPath)
+  const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath)
+  //#endregion
 
-//#region [4]
-const resolvedWorkindirsPath = path.join(config.workingdirsDirAbsPath, entryDirPath)
-const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath)
-//#endregion
+  for (const workingdirAbsPath of workingdirs) {
+    await runAt(workingdirAbsPath)
+  }
 
+}());
 
-;(async () => {
+async function runAt(workingdirAbsPath) {
+  if (isDev) { console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info(); }
 
-for (const workingdirAbsPath of workingdirs) {
-  // if (isDev) console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info()
-
+  let __workingdirAbsPath = workingdirAbsPath
+  const entryDirName = path.basename(workingdirAbsPath)
   const userCommandsHooks = getHookFor('commandsForEachRootDir')
 
   //#region [4.1]
   const rootDirAbsPath = getRootDirForWorkingdir(workingdirAbsPath)
   hshell.enterOnDir(rootDirAbsPath)
-  console.log('Em: ' + log.warning(rootDirAbsPath))
+  console.log('Em: ' + sty.warning(rootDirAbsPath))
   //#endregion
+
+  // making sure that the `__workingdirAbsPath` is valid directory
+  if (!hshell.isDirectory(workingdirAbsPath)) {
+    __workingdirAbsPath = path.dirname(workingdirAbsPath)
+  }
 
   //#region [4.2]
   await runHookOn(userCommandsHooks, 'onEnter')
   //#endregion
 
   //#region [4.3]
-  hshell.enterOnDir(workingdirAbsPath)
+  hshell.enterOnDir(__workingdirAbsPath)
   //#endregion
 
   //#region [4.4]
@@ -204,52 +213,52 @@ for (const workingdirAbsPath of workingdirs) {
   const rootLookupDirAbsPath = path.join(lookupDirAbsPath, rootDirName + '.json')
 
   const rootLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
-  if (!rootLastCommitId.trim()) continue
+  if (!rootLastCommitId.trim()) return
 
   const currLookup = _.loadJSON(rootLookupDirAbsPath)
-  if (currLookup._id === rootLastCommitId) continue
-  console.log(`passou[${rootLastCommitId}]`)
+  if (currLookup._id === rootLastCommitId) return
 
-  const currStoredRelease = _.getDeepValue(currLookup, ['releases', entryDirPath])
-  if (currStoredRelease && currStoredRelease._id === rootLastCommitId) continue
+  const currStoredRelease = _.getDeep(currLookup, ['releases', entryDirName])
+  if (currStoredRelease && currStoredRelease._id === rootLastCommitId) return
   //#endregion
 
-  //#region [4.5]
   if (config.initServer) {
-    const serverAddress = 'http://' + config.initServer(workingdirAbsPath).hostaddress
+    //#region [4.5]
+    const serverAddress = 'http://' + config.initServer(__workingdirAbsPath).hostaddress
     await config.openBrowserAt(serverAddress)
+    //#endregion
+  } else {
+    //#region [4.6]
+    await config.openBrowserAt('file:///' + workingdirAbsPath)
+    //#endregion
   }
-  //#endregion
-
-  //#region [4.6]
-  await config.openBrowserAt('file:///' + workingdirAbsPath)
-  //#endregion
 
   //#region [4.7]
   if (config.commandOnTest) {
-    const commandToRunTest = config.commandOnTest(entryDirPath)
+    const commandToRunTest = config.commandOnTest(entryDirName)
     if (commandToRunTest) {
-      await confirmExecution(commandToRunTest)
-      _.wrapSyncOutput(() => {
-        hshell.exec(commandToRunTest, { silent: false })
-      })
+      const { reply: canRunTests } = await confirmExecution(commandToRunTest)
+      if (canRunTests) {
+        _.wrapSyncOutput(() =>
+          hshell.exec(commandToRunTest, { silent: false }))
+      }
     } else {
-      console.log( log.debug(`Nenhum teste para '${entryDirPath}'`) )
+      console.log(sty`{debug %s {red %s}}`, 'Nenhum teste para', entryDirName)
     }
   }
   //#endregion
 
   // TODO: [4.8]
-  await _.prompt('Finalizar avaliação deste aluno?').list({ choices: ['sim'] })
+  const { reply: updateLookup } = await _.prompt('Finalizar avaliação deste aluno?')
+    .list({ choices: ['sim', 'não salvar alterações'], filter: input => input === 'sim' })
+
+  if (updateLookup) {
+    console.log('atualizaraaaaaaaaa')
+  }
 
   /*
   _.writeJSON(parentLookupDirAbsPath, { id: lastCommitId, })
   const [...workingdirFiles] = hshell.ls('*')
   console.log(workingdirFiles)
   */
-
 }
-
-})();
-
-// console.dir(config, {depth: null})
