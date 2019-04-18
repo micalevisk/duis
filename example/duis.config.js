@@ -17,7 +17,7 @@ parent dir = diretório pai do `workingdir`
 
 root dir = diretório que contém o `.git`
   - será usado para realizar comandos Git
-  - estará no mesmo nível que os demais diretórios git (de outros alunos), portanto deve ser único
+  - estará no mesmo nível que os demais diretórios git (dos outros alunos), portanto deve ser único
   - o nome desse dir. será usado como nome do arquivo de lookup
   - a variável `levelsToRootDir` indica seu caminho em relação ao `workingdir`
 **************************************************************************************************/
@@ -67,7 +67,7 @@ module.exports = {
   levelsToRootDir: 1,
 
   // navegador que abrirá na pasta do aluno (ou o server, se iniciado)
-  browser: {
+  _browser: {
     name: 'chrome',
     opts: '--incognito'
   },
@@ -83,7 +83,7 @@ module.exports = {
   // porta em que o servidor PHP tentará escutar
   _serverPort: 8080,
 
-  test: {
+  _test: {
     // como devem terminar os arquivos de testes, i.e, a extensão deles
     fileExtName: '.test.js',
     // template do diretório em que estarão descritos os testes para cada "trabalho" (working dir)

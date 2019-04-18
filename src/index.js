@@ -9,6 +9,11 @@ hshell.config.silent = true
 
 const pathJoinWithRoot = path.join.bind(null, __dirname, '..', './example')//§
 
+/** @see https://nodejs.org/api/process.html#process_event_unhandledrejection */
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at', p, 'reason:', reason)
+  process.exit(1)
+});
 
 // ███████╗███████╗████████╗██╗   ██╗██████╗
 // ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
@@ -31,7 +36,7 @@ config['startAnswers'] = { commitLimitDate: new Date().toISOString().substr(0, 1
 // resolvido após responder as perguntas de setup
 const workingdirParentDirPathMask = _.t(config.workingdirParentDirPathMask, startVariables)
 const workingdirsDirAbsPath = pathJoinWithRoot(workingdirParentDirPathMask)
-const entryDirPath = _.trimPathSeparator('PHP1') // o primeiro arg passado ao `duis` CLI
+const entryDirPath = 'PHP1/' // o primeiro arg passado ao `duis` CLI
 
 const lookupDirPath = _.t(config.lookupDirPathMask, startVariables)
 const lookupDirAbsPath = pathJoinWithRoot(lookupDirPath)
@@ -172,7 +177,7 @@ async function runHookOn(context, name) {
   //#endregion
 
   //#region [4]
-  const resolvedWorkindirsPath = path.join(config.workingdirsDirAbsPath, entryDirPath)
+  const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
   const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath)
   //#endregion
 
@@ -192,48 +197,60 @@ async function runAt(workingdirAbsPath) {
   //#region [4.1]
   const rootDirAbsPath = getRootDirForWorkingdir(workingdirAbsPath)
   hshell.enterOnDir(rootDirAbsPath)
-  console.log('Em: ' + sty.warning(rootDirAbsPath))
   //#endregion
 
-  // making sure that the `__workingdirAbsPath` is valid directory
+  //#region [4.2]
+  const rootLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
+  if (!rootLastCommitId) return // no commits
+  console.log(sty`{secondary Último commit no root: {bold %s}}`, rootLastCommitId)
+
+  const rootDirName = path.basename(rootDirAbsPath)
+  const rootLookupDirAbsPath = path.join(lookupDirAbsPath, rootDirName + '.json')
+  const currLookup = _.loadJSON(rootLookupDirAbsPath)
+  if (_.getDeep(currLookup, ['_id']) === rootLastCommitId) {
+    console.log(sty.danger`✗ Nenhuma atualização no diretório`)
+    return
+  }
+  //#endregion
+
+  // making sure that the `__workingdirAbsPath` is a valid directory
   if (!hshell.isDirectory(workingdirAbsPath)) {
     __workingdirAbsPath = path.dirname(workingdirAbsPath)
   }
 
-  //#region [4.2]
+  //#region [4.3]
   await runHookOn(userCommandsHooks, 'onEnter')
   //#endregion
 
-  //#region [4.3]
+  //#region [4.4]
   hshell.enterOnDir(__workingdirAbsPath)
+  console.log('Em: ' + sty.warning(__workingdirAbsPath))
   //#endregion
 
-  //#region [4.4]
-  const rootDirName = path.basename(rootDirAbsPath)
-  const rootLookupDirAbsPath = path.join(lookupDirAbsPath, rootDirName + '.json')
-
-  const rootLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
-  if (!rootLastCommitId.trim()) return
-
-  const currLookup = _.loadJSON(rootLookupDirAbsPath)
-  if (currLookup._id === rootLastCommitId) return
+  //#region [4.5]
+  const workingdirLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
+  if (!workingdirLastCommitId) return // no commits
+  console.log(sty`{secondary Último commit: {bold %s}}`, workingdirLastCommitId)
 
   const currStoredRelease = _.getDeep(currLookup, ['releases', entryDirName])
-  if (currStoredRelease && currStoredRelease._id === rootLastCommitId) return
+  if (_.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId) {
+    console.log(sty.success`🗸 Versão já registrada`)
+    return
+  }
   //#endregion
 
   if (config.initServer) {
-    //#region [4.5]
+    //#region [4.6]
     const serverAddress = 'http://' + config.initServer(__workingdirAbsPath).hostaddress
     await config.openBrowserAt(serverAddress)
     //#endregion
   } else {
-    //#region [4.6]
+    //#region [4.7]
     await config.openBrowserAt('file:///' + workingdirAbsPath)
     //#endregion
   }
 
-  //#region [4.7]
+  //#region [4.8]
   if (config.commandOnTest) {
     const commandToRunTest = config.commandOnTest(entryDirName)
     if (commandToRunTest) {
@@ -248,17 +265,21 @@ async function runAt(workingdirAbsPath) {
   }
   //#endregion
 
-  // TODO: [4.8]
-  const { reply: updateLookup } = await _.prompt('Finalizar avaliação deste aluno?')
+  // TODO: [4.9]
+
+  //#region [4.10]
+  const { reply: updateLookup } = await _.prompt(`Finalizar avaliação de ${sty.emph(rootDirName)}?`)
     .list({ choices: ['sim', 'não salvar alterações'], filter: input => input === 'sim' })
 
   if (updateLookup) {
-    console.log('atualizaraaaaaaaaa')
+    _.setDeep(currLookup, ['_id'], rootLastCommitId)
+    const workingdirLookup = {
+      _id: workingdirLastCommitId,
+      prompts: [],
+    }
+    _.setDeep(currLookup, ['releases', entryDirName], workingdirLookup)
+    _.writeJSON(rootLookupDirAbsPath, currLookup)
   }
+  //#endregion
 
-  /*
-  _.writeJSON(parentLookupDirAbsPath, { id: lastCommitId, })
-  const [...workingdirFiles] = hshell.ls('*')
-  console.log(workingdirFiles)
-  */
 }

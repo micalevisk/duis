@@ -64,23 +64,28 @@ Iniciar processo com **`$ duis TRAB1 .`**
 2. Fazer as perguntas definidas em `CONFIG#startQuestions`, para adicionar mais valores ao estado inicial
 3. Criar o diretório definido em `CONFIG#lookupDirPathMask`, se ele já não existir
 4. Para cada diretório resolvido da junção de `CONFIG#workingdirParentDirPathMask` (renderizado) e `<PATH/TO/TRAB-FILE>` (eg. `TRAB1`), tratá-lo como _working dir_ e fazer:
-    1. Entrar no diretório "root" do _working dir_ corrente
-    2. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onEnter`
-    3. Entrar no diretório _working dir_ corrente (eg. `./Turma1/nick-aluno-a/TRAB1`)
-    4. Se o id do último commit no _working dir_ for igual ao recuperado do arquivo de lookup corrente (eg. `./Turma1/.duis.lookup/nick-aluno-a.json`), significa que esse diretório já foi visto, então:
-        1. Se tiver uma entrada para `<PATH/TO/TRAB-FILE>` em `.releases` do arquivo de lookup **e** o id deste for igual ao último commit do _working dir_, então esse "trabalho" não foi atualizado, deve-se pular essa iteração
+    1. Entrar no diretório "root" do _working dir_ corrente (eg. `./Turma1/nick-aluno-a`)
+    2. Recuperar o id do último commit no diretório "root", e fazer:
+        1. Se for igual ao recuperado do arquivo de lookup corrente (eg. `./Turma1/.duis.lookup/nick-aluno-a.json`), significa que essa versão do diretório já foi visto, então deve-se pular essa iteração
         2. Senão, continuar o processo
-    5. Se `CONFIG#serverPort` estiver definido, então:
+    3. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onEnter`
+    4. Entrar no diretório _working dir_ corrente (eg. `./Turma1/nick-aluno-a/TRAB1`)
+    5. Recuperar o id do último commit no diretório _working dir_, e fazer:
+        1. Se tiver uma entrada para `<PATH/TO/TRAB-FILE>` em `.releases` do arquivo de lookup **e** o id deste for igual a este commit, então esse "trabalho" não foi atualizado; pular essa iteração
+        2. Senão, continuar o processo
+    6. Se `CONFIG#serverPort` estiver definido, então:
         1. Criar um servidor PHP no _working dir_
         2. Abrir o navegador definido em `CONFIG#browser` na raiz do server local
-    6. Senão, abrir o navegador em _working dir_
-    7. Se existir o arquivo de teste associado ao "trabalho" corrente, então:
+    7. Senão, abrir o navegador em _working dir_
+    8. Se existir o arquivo de teste associado ao "trabalho" corrente, então:
         1. Perguntar se deseja executar o comando definido em `CONFIG#test.commandToRun` (eg. `testcafe -sf chrome:headless ./Turma1/__tests__/TRAB1.test.js`)
         2. Executar o comando para (teoricamente) executar os testes
-    7. Fazer as perguntas definidas no `CONFIG#workingdirQuestions` (perguntando antes de executar cada, se `CONFIG#safeMode` for `true`)
-    8. Esperar a resposta da pergunta "Finalizar avaliação deste aluno (`<studentGitRepoDirName>`)?"
 
+    9. Fazer as perguntas definidas no `CONFIG#workingdirQuestions` (perguntando antes de executar cada, se `CONFIG#safeMode` for `true`)
+
+    10. Esperar a resposta da pergunta "Finalizar avaliação deste aluno (`<rootName>`)?"
         1. Atualizar o arquivo de lookup correspondente
+
         2. Parar o servidor (se iniciado)
         3. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onBeforeLeave`
 
