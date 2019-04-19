@@ -203,10 +203,10 @@ async function runAt(workingdirAbsPath) {
   const rootDirName = path.basename(rootDirAbsPath)
   const rootLookupDirAbsPath = path.join(lookupDirAbsPath, rootDirName + '.json')
   const currLookup = _.loadJSON(rootLookupDirAbsPath)
-  if (_.getDeep(currLookup, ['_id']) === rootLastCommitId) {
-    console.log(sty.danger`✗ Nenhuma atualização no diretório`)
-    return
-  }
+  // if (_.getDeep(currLookup, ['_id']) === rootLastCommitId) {
+  //   console.log(sty.danger`✗ Nenhuma atualização no diretório`)
+  //   return
+  // }
   //#endregion
 
   // making sure that the `__workingdirAbsPath` is a valid directory
@@ -214,39 +214,39 @@ async function runAt(workingdirAbsPath) {
     __workingdirAbsPath = path.dirname(workingdirAbsPath)
   }
 
-  //#region [4.3]
+  //#region [4.2]
   await runHookOn(userCommandsHooks, 'onEnter')
   //#endregion
 
-  //#region [4.4]
+  //#region [4.3]
   hshell.enterOnDir(__workingdirAbsPath)
   console.log('Em: ' + sty.warning(__workingdirAbsPath))
   //#endregion
 
-  //#region [4.5]
+  //#region [4.4]
   const workingdirLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
   if (!workingdirLastCommitId) return // no commits
   console.log(sty`{secondary Último commit: {bold %s}}`, workingdirLastCommitId)
 
-  const currStoredRelease = _.getDeep(currLookup, ['releases', entryDirName])
+  const currStoredRelease = _.getDeep(currLookup, [entryDirName])
   if (_.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId) {
-    console.log(sty.success`🗸 Versão já registrada`)
+    console.log(sty`{success 🗸 Versão já registrada para {bold %s}}`, entryDirName)
     return
   }
   //#endregion
 
   if (config.initServer) {
-    //#region [4.6]
+    //#region [4.5]
     const serverAddress = 'http://' + config.initServer(__workingdirAbsPath).hostaddress
     await config.openBrowserAt(serverAddress)
     //#endregion
   } else {
-    //#region [4.7]
+    //#region [4.6]
     await config.openBrowserAt('file:///' + workingdirAbsPath)
     //#endregion
   }
 
-  //#region [4.8]
+  //#region [4.7]
   if (config.commandOnTest) {
     const commandToRunTest = config.commandOnTest(entryDirName)
     if (commandToRunTest) {
@@ -261,19 +261,18 @@ async function runAt(workingdirAbsPath) {
   }
   //#endregion
 
-  // TODO: [4.9]
+  // TODO: [4.8]
 
-  //#region [4.10]
+  //#region [4.9]
   const { reply: updateLookup } = await _.prompt(`Finalizar avaliação de ${sty.emph(rootDirName)}?`)
     .list({ choices: ['sim', 'não salvar alterações'], filter: input => input === 'sim' })
 
   if (updateLookup) {
-    _.setDeep(currLookup, ['_id'], rootLastCommitId)
     const workingdirLookup = {
       _id: workingdirLastCommitId,
       prompts: [],
     }
-    _.setDeep(currLookup, ['releases', entryDirName], workingdirLookup)
+    _.setDeep(currLookup, [entryDirName], workingdirLookup)
     _.writeJSON(rootLookupDirAbsPath, currLookup)
   }
   //#endregion

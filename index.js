@@ -1,11 +1,16 @@
 const path = require('path')
 const duis = require('./src')
 
-// TODO: export o cli como func
 module.exports = async () => {
   if (process.argv.length <= 2) return // TODO: show help
 
-  const [,, pathToTrabFile, pathToConfigFile = '.'] = process.argv
+  // assuming: $ duis <PATH/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
+  let [,, pathToConfigFile, pathToTrabFile] = process.argv
+  // treat as: $ duis <PATH/TO/TRAB-FILE>
+  if (process.argv.length === 3) {
+    pathToTrabFile = pathToConfigFile
+    pathToConfigFile = '.'
+  }
 
   // TODO: tratar casos onde o nome do arquivo é passado em `pathToConfigFile`
   const configFilename = 'duis.config.js'
