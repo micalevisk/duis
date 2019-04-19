@@ -67,7 +67,7 @@ module.exports = {
   levelsToRootDir: 1,
 
   // navegador que abrirá na pasta do aluno (ou o server, se iniciado)
-  _browser: {
+  browser: {
     name: 'chrome',
     opts: '--incognito'
   },
@@ -83,7 +83,7 @@ module.exports = {
   // porta em que o servidor PHP tentará escutar
   _serverPort: 8080,
 
-  _test: {
+  test: {
     // como devem terminar os arquivos de testes, i.e, a extensão deles
     fileExtName: '.test.js',
     // template do diretório em que estarão descritos os testes para cada "trabalho" (working dir)

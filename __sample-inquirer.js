@@ -1,5 +1,5 @@
 const inquirer = require('inquirer');
-
+inquirer.registerPrompt('fuzzypath', require('inquirer-fuzzy-path'))
 
 const q_input = {
   type: 'input',
@@ -152,7 +152,7 @@ async function askUntilReturnTrue(question) {
   const { [question.name]: repeat } = await inquirer.prompt(question);
   return repeat ? repeat : askUntilReturnTrue(question)
 }
-
+/*
 function prompt(props) {
   return new Proxy({}, {
     get(_, propName) {
@@ -179,7 +179,7 @@ const x = await prompt({
   message: 'Finalizar avaliação deste aluno?'
 }).list({ choices: ['sim'] })
 console.log('<<<<<', x)
-
+*/
 /*
 const proceed = await askUntilReturnTrue({
   name: 'proceed',
@@ -193,5 +193,29 @@ const proceed = await askUntilReturnTrue({
 console.log('>>', proceed)
 */
 
+const x = await inquirer.prompt([
+  {
+    type: 'fuzzypath',
+    name: 'path',
+    excludePath: nodePath => nodePath.startsWith('node_modules'),
+      // excludePath :: (String) -> Bool
+      // excludePath to exclude some paths from the file-system scan
+    itemType: 'any',
+      // itemType :: 'any' | 'directory' | 'file'
+      // specify the type of nodes to display
+      // default value: 'any'
+      // example: itemType: 'file' - hides directories from the item list
+    rootPath: 'example',
+      // rootPath :: String
+      // Root search directory
+    message: 'Select a target directory for your component:',
+    default: 'CB01/',
+    suggestOnly: false,
+      // suggestOnly :: Bool
+      // Restrict prompt answer to available choices or use them as suggestions
+  }
+]);
+
+console.log(x)
 
 })()

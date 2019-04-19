@@ -21,9 +21,9 @@ hshell.config.silent = true
  */
 module.exports = async function duisAbove(configFileAbsPath, pathToTrabFile) {
 
-if (!hshell.isReadableFile(configFileAbsPath)) {
-  console.log(sty.error`File not found: %s`, configFileAbsPath)
-  return 404
+if ( !hshell.isReadableFile(configFileAbsPath) ) {
+  console.log(sty`{error %s {bold %s}}`, 'File not found:', configFileAbsPath)
+  return 401
 }
 
 const pathJoinWithRoot = path.resolve.bind(null, configFileAbsPath, '..')
@@ -69,6 +69,9 @@ if (config.test && config.test.commandToRun) {
   if ( hshell.isDirectory(testsDirAbsPath) ) {
     const commandToTest = config.test.commandToRun
     const fileExtName = config.test.fileExtName || ''
+
+    // NOTE: testsDirAbsPath
+    config['testsDirAbsPath'] = testsDirAbsPath
 
     // NOTE: commandOnTest
     config['commandOnTest'] = function commandOnTest(testFilename, ...args) {
@@ -186,6 +189,8 @@ async function runHookOn(context, name) {
 async function runAt(workingdirAbsPath) {
   if (isDev) { console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info(); }
 
+  console.log(sty`{warning %s {bold %s}}`, 'Para:', workingdirAbsPath)
+
   let __workingdirAbsPath = workingdirAbsPath
   const entryDirName = path.basename(workingdirAbsPath)
   const userCommandsHooks = getHookFor('commandsForEachRootDir')
@@ -198,11 +203,49 @@ async function runAt(workingdirAbsPath) {
   //#region [4.2]
   const rootLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
   if (!rootLastCommitId) return // no commits
-  console.log(sty`{secondary Último commit no root: {bold %s}}`, rootLastCommitId)
+  console.log(sty`{secondary %s {bold %s}}`, 'Último commit no root:', rootLastCommitId)
 
-  const rootDirName = path.basename(rootDirAbsPath)
-  const rootLookupDirAbsPath = path.join(lookupDirAbsPath, rootDirName + '.json')
-  const currLookup = _.loadJSON(rootLookupDirAbsPath)
+  let rootDirName = path.basename(rootDirAbsPath)
+
+  let rootLookupFileAbsPath = path.join(config.lookupDirAbsPath, rootDirName + '.json')
+  if ( !hshell.isReadableFile(rootLookupFileAbsPath) ) {
+    console.log(sty`{error %s {bold %s}}`, 'File not found:', rootLookupFileAbsPath)
+
+    const { reply } = await _.prompt(
+      `Digitar um ou selecionar um arquivo de lookup para ${sty.emph(rootDirName)}?`)
+      .list({ choices: ['selecionar', 'criar'] })
+
+    if (reply === 'selecionar') {
+      const { reply } = await _.prompt(
+        'Selecione o arquivo de lookup:')
+        .fuzzypath({
+          excludePath: nodePath => nodePath.startsWith('node_modules'),
+          itemType: 'file',
+          default: rootLookupFileAbsPath,
+          rootPath: rootDirAbsPath,
+          suggestOnly: false,
+        });
+
+      rootLookupFileAbsPath = reply
+    } else {
+      const { reply: lookupFilename } = await _.prompt(
+        `Informe o nome do arquivo a ser criado em ${sty.emph(config.lookupDirAbsPath)} ${sty.secondary('[sem a extensão]')}`)
+        .input({
+          default: path.basename(rootLookupFileAbsPath, '.json'),
+          validate(input) {
+            if (!input.toLowerCase().trim()) return 'Informe algo'
+            return true
+          }
+        })
+
+      rootLookupFileAbsPath = path.join(config.lookupDirAbsPath, lookupFilename + '.json')
+    }
+
+    hshell.createFileIfNotExists(rootLookupFileAbsPath)
+    rootDirName = path.basename(rootLookupFileAbsPath, '.json')
+  }
+
+  const currLookup = _.loadJSON(rootLookupFileAbsPath)
   // if (_.getDeep(currLookup, ['_id']) === rootLastCommitId) {
   //   console.log(sty.danger`✗ Nenhuma atualização no diretório`)
   //   return
@@ -220,18 +263,18 @@ async function runAt(workingdirAbsPath) {
 
   //#region [4.3]
   hshell.enterOnDir(__workingdirAbsPath)
-  console.log('Em: ' + sty.warning(__workingdirAbsPath))
+  console.log(sty`{warning %s %s}`, 'Em:', workingdirAbsPath)
   //#endregion
 
   //#region [4.4]
   const workingdirLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
   if (!workingdirLastCommitId) return // no commits
-  console.log(sty`{secondary Último commit: {bold %s}}`, workingdirLastCommitId)
+  console.log(sty`{secondary %s {bold %s}}`, 'Último commit:', workingdirLastCommitId)
 
   const currStoredRelease = _.getDeep(currLookup, [entryDirName])
   if (_.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId) {
-    console.log(sty`{success 🗸 Versão já registrada para {bold %s}}`, entryDirName)
-    return
+    console.log(sty`{success %s {bold %s}}`, '🗸 Versão já registrada para', entryDirName)
+    return 200
   }
   //#endregion
 
@@ -264,7 +307,8 @@ async function runAt(workingdirAbsPath) {
   // TODO: [4.8]
 
   //#region [4.9]
-  const { reply: updateLookup } = await _.prompt(`Finalizar avaliação de ${sty.emph(rootDirName)}?`)
+  const { reply: updateLookup } = await _.prompt(
+    `Finalizar avaliação de ${sty.emph(rootDirName)}?`)
     .list({ choices: ['sim', 'não salvar alterações'], filter: input => input === 'sim' })
 
   if (updateLookup) {
@@ -273,7 +317,7 @@ async function runAt(workingdirAbsPath) {
       prompts: [],
     }
     _.setDeep(currLookup, [entryDirName], workingdirLookup)
-    _.writeJSON(rootLookupDirAbsPath, currLookup)
+    _.writeJSON(rootLookupFileAbsPath, currLookup)
   }
   //#endregion
 }
@@ -289,8 +333,20 @@ async function runAt(workingdirAbsPath) {
   const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath)
   //#endregion
 
+  // directories to ignore when looking for "workingdir"
+  const blackListDirectories = [
+    config.testsDirAbsPath,
+  ]
+
   for (const workingdirAbsPath of workingdirs) {
-    await runAt(workingdirAbsPath)
+    if (blackListDirectories.includes(workingdirAbsPath)) {
+      continue
+    }
+
+    console.log();
+    const code = await runAt(workingdirAbsPath)
+    if (code === 401) return
+    if (code === 402) return
   }
 
 }());

@@ -49,6 +49,13 @@ const humanShell = {
   },
 
   /** @param {string} path */
+  createFileIfNotExists(path) {
+    return !throwingError('touch',
+      path,
+    ).code
+  },
+
+  /** @param {string} path */
   listDirectoriesFrom(path) {
     const [...dirs] = throwingError('ls',
       '-d',
