@@ -2,7 +2,10 @@
   "name": "duis",
   "version": "1.0.0",
   "description": "Ferramenta para otimizar o processo de correção de trabalhos, automatizando etapas constantes.",
-  "main": "src/index.js",
+  "bin": {
+    "duis": "bin/duis"
+  },
+  "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=production node .",
     "dev": "nodemon --inspect-brk ."
@@ -11,6 +14,7 @@
   "author": "Micael Levi <mykael2010@hotmail.com> (micalevisk.github.io)",
   "license": "MIT",
   "dependencies": {
+    "chalk": "^2.4.2",
     "inquirer": "^6.2.2",
     "open": "^6.0.0",
     "shelljs": "^0.8.3"

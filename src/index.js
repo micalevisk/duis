@@ -4,16 +4,30 @@ const { utils: _, sty, openBrowser, PHPServer } = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
 
-if (isDev) hshell.set('-v')
-hshell.config.silent = true
-
-const pathJoinWithRoot = path.join.bind(null, __dirname, '..', './example')//§
-
 /** @see https://nodejs.org/api/process.html#process_event_unhandledrejection */
 process.on('unhandledRejection', (reason, p) => {
   console.log('Unhandled Rejection at', p, 'reason:', reason)
   process.exit(1)
 });
+
+
+if (isDev) hshell.set('-v')
+hshell.config.silent = true
+
+
+/**
+ * @param {string} configFileAbsPath
+ * @param {string} pathToTrabFile
+ */
+module.exports = async function duisAbove(configFileAbsPath, pathToTrabFile) {
+
+if (!hshell.isReadableFile(configFileAbsPath)) {
+  console.log(sty.error`File not found: %s`, configFileAbsPath)
+  return 404
+}
+
+const pathJoinWithRoot = path.resolve.bind(null, configFileAbsPath, '..')
+
 
 // ███████╗███████╗████████╗██╗   ██╗██████╗
 // ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
@@ -23,8 +37,7 @@ process.on('unhandledRejection', (reason, p) => {
 // ╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝
 
 //#region [1]
-const CONFIG_PATH = pathJoinWithRoot('duis.config.js')
-const config = _.requireUpdated(CONFIG_PATH)
+const config = _.requireUpdated(configFileAbsPath)
 //#endregion
 
 // TODO: [2]
@@ -36,7 +49,7 @@ config['startAnswers'] = { commitLimitDate: new Date().toISOString().substr(0, 1
 // resolvido após responder as perguntas de setup
 const workingdirParentDirPathMask = _.t(config.workingdirParentDirPathMask, startVariables)
 const workingdirsDirAbsPath = pathJoinWithRoot(workingdirParentDirPathMask)
-const entryDirPath = 'PHP1/' // o primeiro arg passado ao `duis` CLI
+const entryDirPath = pathToTrabFile
 
 const lookupDirPath = _.t(config.lookupDirPathMask, startVariables)
 const lookupDirAbsPath = pathJoinWithRoot(lookupDirPath)
@@ -170,23 +183,6 @@ async function runHookOn(context, name) {
 // ██║  ██║╚██████╔╝██║ ╚████║
 // ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 
-;(async function() {
-
-  //#region [3]
-  hshell.createDirIfNotExists(config.lookupDirAbsPath)
-  //#endregion
-
-  //#region [4]
-  const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
-  const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath)
-  //#endregion
-
-  for (const workingdirAbsPath of workingdirs) {
-    await runAt(workingdirAbsPath)
-  }
-
-}());
-
 async function runAt(workingdirAbsPath) {
   if (isDev) { console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info(); }
 
@@ -281,5 +277,23 @@ async function runAt(workingdirAbsPath) {
     _.writeJSON(rootLookupDirAbsPath, currLookup)
   }
   //#endregion
+}
+
+;(async function() {
+
+  //#region [3]
+  hshell.createDirIfNotExists(config.lookupDirAbsPath)
+  //#endregion
+
+  //#region [4]
+  const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
+  const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath)
+  //#endregion
+
+  for (const workingdirAbsPath of workingdirs) {
+    await runAt(workingdirAbsPath)
+  }
+
+}());
 
 }

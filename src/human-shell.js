@@ -13,16 +13,19 @@ function throwingError(method, ...args) {
 
 const humanShell = {
 
+  /** @param {string} programName */
   hasProgram(programName) {
     return !!sh.which(programName)
   },
 
-  enterOnDir(dirPath) {
+  /** @param {string} path */
+  enterOnDir(path) {
     return !throwingError('cd',
-      dirPath,
+      path,
     ).code
   },
 
+  /** @param {string} path */
   isReadableFile(path) {
     try {
       const canAcess = !fs.accessSync(path, fs.constants.R_OK)
@@ -32,17 +35,20 @@ const humanShell = {
     }
   },
 
+  /** @param {string} path */
   isDirectory(path) {
     return sh.test('-d', path)
   },
 
-  createDirIfNotExists(dirPath) {
+  /** @param {string} path */
+  createDirIfNotExists(path) {
     return !throwingError('mkdir',
       '-p',
-      dirPath,
+      path,
     ).code
   },
 
+  /** @param {string} path */
   listDirectoriesFrom(path) {
     const [...dirs] = throwingError('ls',
       '-d',
@@ -52,6 +58,7 @@ const humanShell = {
     return dirs
   },
 
+  /** @param {string} command */
   runSafe(command) {
     if (typeof command !== 'string') return ''
     return throwingError('exec', command).stdout.trim()
