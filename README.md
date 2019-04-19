@@ -84,6 +84,7 @@ Iniciar processo com **`$ duis . TRAB1`**
 
         2. Parar o servidor (se iniciado)
         3. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onBeforeLeave`
+    10. Fechar o navegador, se aberto em `[6]`
 
 ## Formato do arquivo de "lookup" gerado pra cada _working dir_
 > o nome do arquivo deve ser o mesmo do diretório git em que o `working dir` está

@@ -89,31 +89,45 @@ if (config.test && config.test.commandToRun) {
   delete config['test']
 }
 
+// NOTE: openBrowserAt
+config['openBrowserAt'] = () => {}
+// NOTE: killBrowser
+config['killBrowser'] = () => {}
 if (config.browser && config.browser.name) {
   const browserName = config.browser.name
   // NOTE: openBrowserAt
   config['openBrowserAt'] = async function openBrowserAt(URL, onProcessClose) {
-    const createBrowserProcess = openBrowser.bind(openBrowser, {
-      name: browserName,
-      path: URL,
-      opts: config.browser.opts, onProcessClose,
-    })
+    const _openBrowser = () => {
+      const browserProcess = openBrowser({
+        name: browserName,
+        path: URL,
+        opts: config.browser.opts, onProcessClose,
+      })
+
+      // NOTE: killBrowser
+      config['killBrowser'] = function killBrowser() {
+        if (browserProcess) {
+          browserProcess.kill('SIGTERM')
+          browserProcess.kill('SIGINT')
+          console.log('>>>', browserProcess.killed)
+        }
+      }
+
+      return browserProcess
+    }
 
     if (config.autoOpenBrowser) {
-      return createBrowserProcess()
+      return _openBrowser()
     }
 
     const { reply: canOpenBrowser } = await _.prompt(
-      sty`Abrir o navegador {yellow ${browserName}} em {blue ${URL}}`
+      sty`Abrir o {yellow ${browserName}} em {blue ${URL}}`
     ).list({ choices: ['sim', 'não'], filter: input => input === 'sim' })
 
     if (canOpenBrowser) {
-      return createBrowserProcess()
+      return _openBrowser()
     }
   }
-} else {
-  // NOTE: openBrowserAt
-  config['openBrowserAt'] = () => {}
 }
 
 if (config.serverPort) {
@@ -319,6 +333,10 @@ async function runAt(workingdirAbsPath) {
     _.setDeep(currLookup, [entryDirName], workingdirLookup)
     _.writeJSON(rootLookupFileAbsPath, currLookup)
   }
+  //#endregion
+
+  //#region [4.10]
+  config.killBrowser()
   //#endregion
 }
 
