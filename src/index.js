@@ -4,12 +4,6 @@ const { utils: _, sty, openBrowser, PHPServer } = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
 
-/** @see https://nodejs.org/api/process.html#process_event_unhandledrejection */
-process.on('unhandledRejection', (reason, p) => {
-  console.log('Unhandled Rejection at', p, 'reason:', reason)
-  process.exit(1)
-});
-
 
 if (isDev) hshell.set('-v')
 hshell.config.silent = true
@@ -405,14 +399,12 @@ async function runAt(workingdirAbsPath) {
 
   try {
 
-    //#region [3]
-    hshell.createDirIfNotExists(config.lookupDirAbsPath)
-    //#endregion
-
-
-    //#region [4]
     const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
-    const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath)
+    const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath) // may throw an error
+
+    //#region [3]
+    console.log(config.lookupDirAbsPath)
+    hshell.createDirIfNotExists(config.lookupDirAbsPath)
     //#endregion
 
     // directories to ignore when looking for "workingdir"
