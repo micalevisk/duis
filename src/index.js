@@ -114,7 +114,6 @@ if (config.browser && config.browser.name) {
         if (browserProcess) {
           browserProcess.kill('SIGTERM')
           browserProcess.kill('SIGINT')
-          console.log('>>>', browserProcess.killed)
         }
       }
 
@@ -208,6 +207,12 @@ async function runHookOn(context, name) {
   }
 }
 
+async function defineEntryDirName(defaultEntryDirName) {
+  return _.prompt(
+    `Nome que será usado para identificar esse trabalho no arquivo de lookup`
+  ).input({ default: defaultEntryDirName }).then(({ reply }) => reply)
+}
+
 
 // ██████╗ ██╗   ██╗███╗   ██╗
 // ██╔══██╗██║   ██║████╗  ██║
@@ -246,7 +251,7 @@ async function runAt(workingdirAbsPath) {
     console.log(sty`{error %s {bold %s}}`, 'File not found:', rootLookupFileAbsPath)
 
     const { reply } = await _.prompt(
-      `Digitar um ou selecionar um arquivo de lookup para ${sty.emph(rootDirName)}?`)
+      `Digitar ou selecionar um arquivo de lookup para ${sty.emph(rootDirName)}?`)
       .list({ choices: ['selecionar', 'criar'] })
 
     if (reply === 'selecionar') {
@@ -275,11 +280,6 @@ async function runAt(workingdirAbsPath) {
       rootLookupFileAbsPath = path.join(config.lookupDirAbsPath, lookupFilename + '.json')
     }
 
-    const { reply: newEntryDirName } = await _.prompt(
-      `Qual nome que será usado para identificar esse trabalho no arquivo de lookup`
-    ).input()
-
-    entryDirName = newEntryDirName
     hshell.createFileIfNotExists(rootLookupFileAbsPath)
     rootDirName = path.basename(rootLookupFileAbsPath, '.json')
   }
@@ -309,6 +309,8 @@ async function runAt(workingdirAbsPath) {
   const workingdirLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
   if (!workingdirLastCommitId) return // no commits
   console.log(sty`{secondary %s {bold %s}}`, 'Último commit:', workingdirLastCommitId)
+
+  entryDirName = await defineEntryDirName(entryDirName)
 
   const currStoredRelease = _.getDeep(currLookup, [entryDirName])
   if (_.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId) {
@@ -344,23 +346,34 @@ async function runAt(workingdirAbsPath) {
   }
   //#endregion
 
-  //#region [4.8]
-  const answersWorkingdirQuestions = await _.rawPrompt(config.workingdirQuestions)
-  //#endregion
+  for (let repeatPromp = true; repeatPromp; ) {
+    //#region [4.8]
+    const answersWorkingdirQuestions = await _.rawPrompt(config.workingdirQuestions)
+    //#endregion
 
-  //#region [4.9]
-  const { reply: updateLookup } = await _.prompt(
-    `Finalizar avaliação de ${sty.emph(rootDirName)}? Salvar como ${sty.secondary(entryDirName)}`)
-    .list({ choices: ['sim', 'não salvar alterações'], filter: input => input === 'sim' })
+    //#region [4.9]
+    const { reply: updateLookup } = await _.prompt(
+      `Finalizar avaliação de ${sty.emph(rootDirName)}? Salvar como ${sty.secondary(entryDirName)}`)
+      .list({ choices: ['sim', 'não salvar alterações'], filter: input => input === 'sim' })
 
-  if (updateLookup) {
-    const workingdirLookup = {
-      _id: workingdirLastCommitId,
-      prompts: answersWorkingdirQuestions &&
-               _.mapPairsToObj(Object.entries(answersWorkingdirQuestions), ['q', 'a']),
+    if (updateLookup) {
+      const workingdirLookup = {
+        _id: workingdirLastCommitId,
+        prompts: answersWorkingdirQuestions &&
+                 _.mapPairsToObj(Object.entries(answersWorkingdirQuestions), ['q', 'a']),
+      }
+      _.setDeep(currLookup, [entryDirName], workingdirLookup)
+      _.writeJSON(rootLookupFileAbsPath, currLookup)
     }
-    _.setDeep(currLookup, [entryDirName], workingdirLookup)
-    _.writeJSON(rootLookupFileAbsPath, currLookup)
+
+    const { reply: mustRepeatPrompt } = await _.prompt(
+      `Reavaliar ` + sty.secondary`-- definindo outro identificador`
+    ).confirm({ default: false })
+
+    repeatPromp = mustRepeatPrompt
+    if (repeatPromp) {
+      entryDirName = await defineEntryDirName(entryDirName)
+    }
   }
 
   config.stopServer()
