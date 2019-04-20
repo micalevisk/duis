@@ -22,6 +22,13 @@ root dir = diretório que contém o `.git`
   - a variável `levelsToRootDir` indica seu caminho em relação ao `workingdir`
 **************************************************************************************************/
 
+//  ██████╗ ██████╗ ███╗   ██╗███████╗██╗ ██████╗ ███████╗
+// ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝ ██╔════╝
+// ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗███████╗
+// ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║╚════██║
+// ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝███████║
+//  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
+
 const myQuestionsToEachWorkingdir = require('./duis.questions')
 
 // perguntas cuja respostas definirão mais variáveis na config abaixo
@@ -30,12 +37,9 @@ const myStartQuestions = [
   {
     type: 'input',
     name: 'TURMA',
-    message: 'Turma (parent dir. onde os repos estão)',
+    message: 'Turma (dir. pai dos repos dos alunos)',
     default: 'CB01',
-    validate(answer) {
-      if (!answer.trim()) return 'Informe algo'
-      return true
-    }
+    validate: answer => !answer.trim() ? 'Informe algo' : true
   },
   {
     type: 'input',
@@ -43,22 +47,7 @@ const myStartQuestions = [
     message: 'Nick do aluno (git repo) que será inspecionado',
     default: '*'
   },
-  {
-    type: 'input',
-    name: 'commitLimitDate',
-    default: new Date().toISOString().substr(0, 10),
-    message: 'Data máxima dos commits [AAAA-DD-MM]',
-    validate: value => !!value.trim() ? (/^\d{4}-\d{2}-\d{2}$/).test(value) : '' // bypass if is empty
-  },
 ]
-
-
-// ██████╗ ██████╗ ███╗   ██╗███████╗██╗ ██████╗ ███████╗
-// ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝ ██╔════╝
-// ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗███████╗
-// ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║╚════██║
-// ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝███████║
-//  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
 
 module.exports = {
 

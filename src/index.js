@@ -28,6 +28,15 @@ if ( !hshell.isReadableFile(configFileAbsPath) ) {
 
 const pathJoinWithRoot = path.resolve.bind(null, configFileAbsPath, '..')
 
+const defaultStartQuestions = [
+  {
+    type: 'input',
+    name: 'commitLimitDate',
+    default: new Date().toISOString().substr(0, 10),
+    message: `Data máxima dos commits ${sty.secondary('[AAAA-DD-MM]')}`,
+    validate: input => !input.trim() ? 'Formato inválido!' : (/^\d{4}-\d{2}-\d{2}$/).test(input)
+  },
+]
 
 // ███████╗███████╗████████╗██╗   ██╗██████╗
 // ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
@@ -41,7 +50,10 @@ const config = _.requireUpdated(configFileAbsPath)
 //#endregion
 
 //#region [2]
-const startAnswers = await _.rawPrompt(config.startQuestions)
+const startAnswers = await _.rawPrompt([
+  ...defaultStartQuestions,
+  ...config.startQuestions,
+])
 
 const namesStartVariables = Object.keys(startAnswers).filter(_.isUpper)
 // respostas com as keys (name) com letras maiúsculas
@@ -153,11 +165,6 @@ if (config.serverPort) {
 }
 
 
-function getHookFor(context) {
-  return config[context]
-}
-
-
 // ██╗   ██╗████████╗██╗██╗     ███████╗
 // ██║   ██║╚══██╔══╝██║██║     ██╔════╝
 // ██║   ██║   ██║   ██║██║     ███████╗
@@ -171,20 +178,9 @@ function getRootDirForWorkingdir(wdAbs) {
     ('..' + path.sep).repeat(config.levelsToRootDir))
 }
 
-function truncatePath(path) {
-  return _.stripDirs(path, config.levelsToRootDir * -3)
+function getHookFor(context) {
+  return config[context]
 }
-
-function getLastCommit({ until = '', parent = 'remotes/origin/master', ref = '.' }) {
-  return hshell
-    .runSafe(`git rev-list -1 --until="${until}" --abbrev-commit ${parent} ${ref}`)
-}
-
-async function confirmExecution(command, props = {}) {
-  return _.prompt(`Executar ${sty.danger(command)}`)
-    .confirm(props)
-}
-
 
 async function runHookOn(context, name) {
   if (!context || !context[name]) return
@@ -207,10 +203,30 @@ async function runHookOn(context, name) {
   }
 }
 
-async function defineEntryDirName(defaultEntryDirName) {
+
+function truncatePath(path) {
+  return _.stripDirs(path, config.levelsToRootDir * -3)
+}
+
+function getLastCommit({ until = '', parent = 'remotes/origin/master', ref = '.' }) {
+  return hshell
+    .runSafe(`git rev-list -1 --until="${until}" --abbrev-commit ${parent} ${ref}`)
+}
+
+async function confirmExecution(command, props = {}) {
+  return _.prompt(`Executar ${sty.danger(command)}`)
+    .confirm(props)
+}
+
+async function defineEntryDirName(oldEntryDirName, currLookup) {
+  const releasesOnLookupfile = Object.keys(currLookup);
   return _.prompt(
-    `Nome que será usado para identificar esse trabalho no arquivo de lookup`
-  ).input({ default: defaultEntryDirName }).then(({ reply }) => reply)
+    `Identificador desse trabalho no arquivo de lookup`
+  ).suggest({
+    default: oldEntryDirName,
+    suggestions: releasesOnLookupfile,
+    validate: answer => !answer.trim() ? 'Informe algo' : true
+  }).then(({ reply }) => reply.trim())
 }
 
 
@@ -310,7 +326,7 @@ async function runAt(workingdirAbsPath) {
   if (!workingdirLastCommitId) return // no commits
   console.log(sty`{secondary %s {bold %s}}`, 'Último commit:', workingdirLastCommitId)
 
-  entryDirName = await defineEntryDirName(entryDirName)
+  entryDirName = await defineEntryDirName(entryDirName, currLookup)
 
   const currStoredRelease = _.getDeep(currLookup, [entryDirName])
   if (_.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId) {
@@ -372,7 +388,7 @@ async function runAt(workingdirAbsPath) {
 
     repeatPromp = mustRepeatPrompt
     if (repeatPromp) {
-      entryDirName = await defineEntryDirName(entryDirName)
+      entryDirName = await defineEntryDirName(entryDirName, currLookup)
     }
   }
 
@@ -416,8 +432,8 @@ async function runAt(workingdirAbsPath) {
     }
 
   } catch (err) {
-    console.error('[ERROR]', err.message)
-    console.error(err)
+    console.error(sty.error('[ERROR] ' + err.message))
+    if (isDev) console.error(err)
     process.exit(1)
   }
 
