@@ -31,6 +31,11 @@ const myStartQuestions = [
     type: 'input',
     name: 'TURMA',
     message: 'Turma (parent dir. onde os repos estão)',
+    default: 'CB01',
+    validate(answer) {
+      if (!answer.trim()) return 'Informe algo'
+      return true
+    }
   },
   {
     type: 'input',

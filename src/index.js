@@ -40,11 +40,16 @@ const pathJoinWithRoot = path.resolve.bind(null, configFileAbsPath, '..')
 const config = _.requireUpdated(configFileAbsPath)
 //#endregion
 
-// TODO: [2]
+//#region [2]
+const startAnswers = await _.rawPrompt(config.startQuestions)
+
+const namesStartVariables = Object.keys(startAnswers).filter(_.isUpper)
 // respostas com as keys (name) com letras maiúsculas
-const startVariables = { TURMA: 'CB01', NICK_ALUNO: '*' }
+const startVariables = _.pick(startAnswers, namesStartVariables)
+
 // NOTE: startAnswers
-config['startAnswers'] = { commitLimitDate: new Date().toISOString().substr(0, 10) }
+config['startAnswers'] = startAnswers
+//#endregion
 
 // resolvido após responder as perguntas de setup
 const workingdirParentDirPathMask = _.t(config.workingdirParentDirPathMask, startVariables)

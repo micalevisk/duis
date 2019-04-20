@@ -12,7 +12,6 @@ module.exports = async () => {
     pathToConfigFile = '.'
   }
 
-  // TODO: tratar casos onde o nome do arquivo é passado em `pathToConfigFile`
   const configFilename = 'duis.config.js'
   const configFileAbsPath = path.resolve(pathToConfigFile, configFilename)
 
