@@ -307,7 +307,7 @@ async function runAt(workingdirAbsPath) {
 
   const currStoredRelease = _.getDeep(currLookup, [entryDirName])
   if (_.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId) {
-    console.log(sty`{success %s {bold %s}}`, '🗸 Versão já registrada para', entryDirName)
+    console.log(sty`{success {bold %s} %s {bold %s}}`, '🗸', 'Versão já registrada para', entryDirName)
     return 200
   }
   //#endregion
@@ -315,7 +315,7 @@ async function runAt(workingdirAbsPath) {
   if (config.initServer) {
     //#region [4.5]
     const serverAddress = 'http://' + config.initServer(__workingdirAbsPath).hostaddress
-    console.log(sty`{success %s {bold %s}}`, 'Server aberto em:', serverAddress)
+    console.log(sty`{success %s {bold %s}}`, 'Server iniciado em:', serverAddress)
     await config.openBrowserAt(serverAddress)
     //#endregion
   } else {
@@ -339,7 +339,9 @@ async function runAt(workingdirAbsPath) {
   }
   //#endregion
 
-  // TODO: [4.8]
+  //#region [4.8]
+  const answersWorkingdirQuestions = await _.rawPrompt(config.workingdirQuestions)
+  //#endregion
 
   //#region [4.9]
   const { reply: updateLookup } = await _.prompt(
@@ -349,7 +351,8 @@ async function runAt(workingdirAbsPath) {
   if (updateLookup) {
     const workingdirLookup = {
       _id: workingdirLastCommitId,
-      prompts: [],
+      prompts: answersWorkingdirQuestions &&
+               _.mapPairsToObj(Object.entries(answersWorkingdirQuestions), ['q', 'a']),
     }
     _.setDeep(currLookup, [entryDirName], workingdirLookup)
     _.writeJSON(rootLookupFileAbsPath, currLookup)

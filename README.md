@@ -64,7 +64,7 @@ Iniciar processo com **`$ duis . TRAB1`**
 3. Criar o diretório definido em `CONFIG#lookupDirPathMask`, se ele já não existir
 4. Para cada diretório resolvido da junção de `CONFIG#workingdirParentDirPathMask` (renderizado) e `<PATH/TO/TRAB-FILE>` (eg. `TRAB1`), tratá-lo como _working dir_ e fazer:
     1. Entrar no diretório "root" do _working dir_ corrente (eg. `./Turma1/nick-aluno-a`)
-    2. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onEnter`
+    2. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onEnter` (perguntando antes de executar cada, se `CONFIG#safeMode` for `true`)
     3. Entrar no diretório _working dir_ corrente (eg. `./Turma1/nick-aluno-a/TRAB1`)
     4. Recuperar o id do último commit no diretório _working dir_, e fazer:
         1. Se o _working dir_ tiver uma entrada para `<PATH/TO/TRAB-FILE>` no arquivo de lookup corrente (eg. `./Turma1/.duis.lookup/nick-aluno-a.json`) **e** o id deste for igual a este commit, então esse "trabalho" não foi atualizado; pular essa iteração
@@ -77,12 +77,12 @@ Iniciar processo com **`$ duis . TRAB1`**
         1. Perguntar se deseja executar o comando definido em `CONFIG#test.commandToRun` (eg. `testcafe -sf chrome:headless ./Turma1/__tests__/TRAB1.test.js`)
         2. Executar o comando para (teoricamente) executar os testes
 
-    8. Fazer as perguntas definidas no `CONFIG#workingdirQuestions` (perguntando antes de executar cada, se `CONFIG#safeMode` for `true`)
+    8. Fazer as perguntas definidas no `CONFIG#workingdirQuestions`
 
     9. Esperar a resposta da pergunta "Finalizar avaliação de `<rootName>`?"
         1. Atualizar o arquivo de lookup correspondente
         2. Parar o servidor (se iniciado)
-        3. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onBeforeLeave`
+        3. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onBeforeLeave` (perguntando antes de executar cada, se `CONFIG#safeMode` for `true`)
 
     10. Fechar o navegador, se aberto em `[6]`
 
