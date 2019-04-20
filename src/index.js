@@ -130,6 +130,8 @@ if (config.browser && config.browser.name) {
   }
 }
 
+// NOTE: stopServer
+config['stopServer'] = () => {}
 if (config.serverPort) {
   const phpServer = new PHPServer({host: 'localhost', port: config.serverPort})
 
@@ -138,6 +140,11 @@ if (config.serverPort) {
     phpServer.initServer(docroot).terminal.on('close', onProcessClose)
     _.addHandlerToSIGINT(phpServer.shutDown) // making sure the server will close
     return phpServer
+  }
+
+  // NOTE: stopServer
+  config['stopServer'] = function stopServer() {
+    return phpServer.shutDown()
   }
 }
 
@@ -295,6 +302,7 @@ async function runAt(workingdirAbsPath) {
   if (config.initServer) {
     //#region [4.5]
     const serverAddress = 'http://' + config.initServer(__workingdirAbsPath).hostaddress
+    console.log(sty`{success %s {bold %s}}`, 'Server aberto em:', serverAddress)
     await config.openBrowserAt(serverAddress)
     //#endregion
   } else {
