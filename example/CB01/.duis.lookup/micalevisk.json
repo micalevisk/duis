@@ -1,6 +1,28 @@
 {
   "HTML": {
     "_id": "bf01835",
-    "prompts": []
+    "prompts": [
+      {
+        "q": "cell:nota",
+        "a": "exato"
+      }
+    ]
+  },
+  "PHP1": {
+    "_id": "12d896c",
+    "prompts": [
+      {
+        "q": "cell:nota",
+        "a": "quase"
+      },
+      {
+        "q": "note:faltou",
+        "a": [
+          "sei la",
+          "o q faltou",
+          "mer mao"
+        ]
+      }
+    ]
   }
 }

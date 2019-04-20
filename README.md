@@ -76,9 +76,7 @@ Iniciar processo com **`$ duis . TRAB1`**
     7. Se existir o arquivo de teste associado ao "trabalho" corrente, então:
         1. Perguntar se deseja executar o comando definido em `CONFIG#test.commandToRun` (eg. `testcafe -sf chrome:headless ./Turma1/__tests__/TRAB1.test.js`)
         2. Executar o comando para (teoricamente) executar os testes
-
     8. Fazer as perguntas definidas no `CONFIG#workingdirQuestions`
-
     9. Esperar a resposta da pergunta "Finalizar avaliação de `<rootName>`?"
         1. Atualizar o arquivo de lookup correspondente
         2. Parar o servidor (se iniciado)
