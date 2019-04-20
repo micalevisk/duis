@@ -137,7 +137,7 @@ if (config.serverPort) {
 
   // NOTE: initServer
   config['initServer'] = function initServer(docroot, onProcessClose = () => {}) {
-    phpServer.initServer(docroot).terminal.on('close', onProcessClose)
+    phpServer.initServer(docroot).on('close', onProcessClose)
     _.addHandlerToSIGINT(phpServer.shutDown) // making sure the server will close
     return phpServer
   }
@@ -165,6 +165,10 @@ function getRootDirForWorkingdir(wdAbs) {
   return path.join(
     wdAbs,
     ('..' + path.sep).repeat(config.levelsToRootDir))
+}
+
+function truncatePath(path) {
+  return _.stripDirs(path, config.levelsToRootDir * -3)
 }
 
 function getLastCommit({ until = '', parent = 'remotes/origin/master', ref = '.' }) {
@@ -210,10 +214,14 @@ async function runHookOn(context, name) {
 async function runAt(workingdirAbsPath) {
   if (isDev) { console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info(); }
 
-  console.log(sty`{warning %s {bold %s}}`, 'Para:', workingdirAbsPath)
+  const { reply: keepRunning } = await _.prompt(
+    `Continuar para: ${sty.warning(workingdirAbsPath)}`
+  ).confirm()
+
+  if (!keepRunning) return
 
   let __workingdirAbsPath = workingdirAbsPath
-  const entryDirName = path.basename(workingdirAbsPath)
+  let entryDirName = path.basename(workingdirAbsPath)
   const userCommandsHooks = getHookFor('commandsForEachRootDir')
 
   //#region [4.1]
@@ -262,6 +270,11 @@ async function runAt(workingdirAbsPath) {
       rootLookupFileAbsPath = path.join(config.lookupDirAbsPath, lookupFilename + '.json')
     }
 
+    const { reply: newEntryDirName } = await _.prompt(
+      `Qual nome que será usado para identificar esse trabalho no arquivo de lookup`
+    ).input()
+
+    entryDirName = newEntryDirName
     hshell.createFileIfNotExists(rootLookupFileAbsPath)
     rootDirName = path.basename(rootLookupFileAbsPath, '.json')
   }
@@ -284,7 +297,7 @@ async function runAt(workingdirAbsPath) {
 
   //#region [4.3]
   hshell.enterOnDir(__workingdirAbsPath)
-  console.log(sty`{warning %s %s}`, 'Em:', workingdirAbsPath)
+  console.log(sty`{warning {bold %s} %s}`, 'Em:', truncatePath(__workingdirAbsPath))
   //#endregion
 
   //#region [4.4]
@@ -330,7 +343,7 @@ async function runAt(workingdirAbsPath) {
 
   //#region [4.9]
   const { reply: updateLookup } = await _.prompt(
-    `Finalizar avaliação de ${sty.emph(rootDirName)}?`)
+    `Finalizar avaliação de ${sty.emph(rootDirName)}? Salvar como ${sty.secondary(entryDirName)}`)
     .list({ choices: ['sim', 'não salvar alterações'], filter: input => input === 'sim' })
 
   if (updateLookup) {
@@ -341,6 +354,9 @@ async function runAt(workingdirAbsPath) {
     _.setDeep(currLookup, [entryDirName], workingdirLookup)
     _.writeJSON(rootLookupFileAbsPath, currLookup)
   }
+
+  config.stopServer()
+  await runHookOn(userCommandsHooks, 'onBeforeLeave')
   //#endregion
 
   //#region [4.10]
@@ -350,29 +366,38 @@ async function runAt(workingdirAbsPath) {
 
 ;(async function() {
 
-  //#region [3]
-  hshell.createDirIfNotExists(config.lookupDirAbsPath)
-  //#endregion
+  try {
 
-  //#region [4]
-  const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
-  const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath)
-  //#endregion
+    //#region [3]
+    hshell.createDirIfNotExists(config.lookupDirAbsPath)
+    //#endregion
 
-  // directories to ignore when looking for "workingdir"
-  const blackListDirectories = [
-    config.testsDirAbsPath,
-  ]
 
-  for (const workingdirAbsPath of workingdirs) {
-    if (blackListDirectories.includes(workingdirAbsPath)) {
-      continue
+    //#region [4]
+    const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
+    const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath)
+    //#endregion
+
+    // directories to ignore when looking for "workingdir"
+    const blackListDirectories = [
+      config.testsDirAbsPath,
+    ]
+
+    for (const workingdirAbsPath of workingdirs) {
+      if (blackListDirectories.includes(workingdirAbsPath)) {
+        continue
+      }
+
+      console.log();
+      const code = await runAt(workingdirAbsPath)
+      if (code === 401) return
+      if (code === 402) return
     }
 
-    console.log();
-    const code = await runAt(workingdirAbsPath)
-    if (code === 401) return
-    if (code === 402) return
+  } catch (err) {
+    console.error('[ERROR]', err.message)
+    console.error(err)
+    process.exit(1)
   }
 
 }());

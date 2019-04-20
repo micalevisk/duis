@@ -81,9 +81,9 @@ Iniciar processo com **`$ duis . TRAB1`**
 
     9. Esperar a resposta da pergunta "Finalizar avaliação de `<rootName>`?"
         1. Atualizar o arquivo de lookup correspondente
-
         2. Parar o servidor (se iniciado)
         3. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onBeforeLeave`
+
     10. Fechar o navegador, se aberto em `[6]`
 
 ## Formato do arquivo de "lookup" gerado pra cada _working dir_
