@@ -198,8 +198,14 @@ async function runHookOn(context, name) {
 }
 
 
-function truncatePath(path) {
-  return _.stripDirs(path, config.levelsToRootDir * -3)
+function truncatePath(pathToFile) {
+  const homeAbsPath = process.env.HOME
+
+  if (pathToFile.startsWith(homeAbsPath)) {
+    return sty.secondary('~') + pathToFile.substr(homeAbsPath.length)
+  }
+
+  return _.stripDirs(pathToFile, config.levelsToRootDir * -3)
 }
 
 function getLastCommit({ until = '', parent = 'remotes/origin/master', ref = '.' }) {
@@ -212,12 +218,11 @@ async function confirmExecution(command, props = {}) {
     .confirm(props)
 }
 
-async function defineEntryDirName(oldEntryDirName, currLookup) {
+async function defineEntryDirName(currLookup) {
   const releasesOnLookupfile = Object.keys(currLookup);
   return _.prompt(
     `Identificador desse trabalho no arquivo de lookup`
   ).suggest({
-    default: oldEntryDirName,
     suggestions: releasesOnLookupfile,
     validate: answer => !answer.trim() ? 'Informe algo' : true
   }).then(({ reply }) => reply.trim())
@@ -235,10 +240,11 @@ async function runAt(workingdirAbsPath) {
   if (isDev) { console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info(); }
 
   const { reply: keepRunning } = await _.prompt(
-    `Continuar para: ${sty.warning(workingdirAbsPath)}`
+    `Continuar para: ${sty.warning(truncatePath(workingdirAbsPath))}`
   ).confirm()
 
   if (!keepRunning) return
+  console.log() // break line
 
   let __workingdirAbsPath = workingdirAbsPath
   let entryDirName = path.basename(workingdirAbsPath)
@@ -271,14 +277,14 @@ async function runAt(workingdirAbsPath) {
           excludePath: nodePath => nodePath.startsWith('node_modules'),
           itemType: 'file',
           default: rootLookupFileAbsPath,
-          rootPath: rootDirAbsPath,
+          rootPath: config.lookupDirAbsPath,
           suggestOnly: false,
         });
 
       rootLookupFileAbsPath = reply
     } else {
       const { reply: lookupFilename } = await _.prompt(
-        `Informe o nome do arquivo a ser criado em ${sty.emph(config.lookupDirAbsPath)} ${sty.secondary('[sem a extensão]')}`)
+        `Informe o nome do arquivo a ser criado em ${sty.emph(truncatePath(config.lookupDirAbsPath))} ${sty.secondary('[sem a extensão]')}`)
         .input({
           default: path.basename(rootLookupFileAbsPath, '.json'),
           validate(input) {
@@ -320,7 +326,7 @@ async function runAt(workingdirAbsPath) {
   if (!workingdirLastCommitId) return // no commits
   console.log(sty`{secondary %s {bold %s}}`, 'Último commit:', workingdirLastCommitId)
 
-  entryDirName = await defineEntryDirName(entryDirName, currLookup)
+  entryDirName = await defineEntryDirName(currLookup)
 
   const currStoredRelease = _.getDeep(currLookup, [entryDirName])
   if (_.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId) {
@@ -382,7 +388,7 @@ async function runAt(workingdirAbsPath) {
 
     repeatPromp = mustRepeatPrompt
     if (repeatPromp) {
-      entryDirName = await defineEntryDirName(entryDirName, currLookup)
+      entryDirName = await defineEntryDirName(currLookup)
     }
   }
 
@@ -403,7 +409,6 @@ async function runAt(workingdirAbsPath) {
     const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath) // may throw an error
 
     //#region [3]
-    console.log(config.lookupDirAbsPath)
     hshell.createDirIfNotExists(config.lookupDirAbsPath)
     //#endregion
 
@@ -417,7 +422,6 @@ async function runAt(workingdirAbsPath) {
         continue
       }
 
-      console.log();
       const code = await runAt(workingdirAbsPath)
       if (code === 401) return
       if (code === 402) return
