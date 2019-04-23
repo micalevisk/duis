@@ -148,7 +148,7 @@ if (config.serverPort) {
   // NOTE: initServer
   config['initServer'] = function initServer(docroot, onProcessClose = () => {}) {
     phpServer.initServer(docroot).on('close', onProcessClose)
-    _.addHandlerToSIGINT(phpServer.shutDown) // making sure the server will close
+    _.addHandlerToSIGINT(phpServer.shutDown.bind(phpServer)) // making sure the server will close
     return phpServer
   }
 
