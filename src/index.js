@@ -218,11 +218,12 @@ async function confirmExecution(command, props = {}) {
     .confirm(props)
 }
 
-async function defineEntryDirName(currLookup) {
+async function defineEntryDirName(currLookup, defaultEntryname) {
   const releasesOnLookupfile = Object.keys(currLookup);
   return _.prompt(
     `Identificador desse trabalho no arquivo de lookup`
   ).suggest({
+    default: defaultEntryname,
     suggestions: releasesOnLookupfile,
     validate: answer => !answer.trim() ? 'Informe algo' : true
   }).then(({ reply }) => reply.trim())
@@ -326,7 +327,7 @@ async function runAt(workingdirAbsPath) {
   if (!workingdirLastCommitId) return // no commits
   console.log(sty`{secondary %s {bold %s}}`, 'Último commit:', workingdirLastCommitId)
 
-  entryDirName = await defineEntryDirName(currLookup)
+  entryDirName = await defineEntryDirName(currLookup, entryDirName)
 
   const currStoredRelease = _.getDeep(currLookup, [entryDirName])
   if (_.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId) {
