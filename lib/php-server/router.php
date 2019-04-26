@@ -1,4 +1,10 @@
 <?php
+// FIXME: arquivos com espaços não são renderizados
+// o que é:
+// Atividade%201/Minha%20Primeira%20Pagina%20HTML.html
+// sai como:
+// Atividade+1%2FMinha+Primeira+Pagina+HTML.html
+// E mesmo correto, não renderiza com o `router`
 
 $URI = urldecode($_SERVER['REQUEST_URI']);
 
