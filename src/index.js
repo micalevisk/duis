@@ -3,7 +3,7 @@ const hshell = require('./human-shell')
 const { utils: _, sty, openBrowser, PHPServer } = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
-
+const log = console.log
 
 if (isDev) hshell.set('-v')
 hshell.config.silent = true
@@ -16,7 +16,7 @@ hshell.config.silent = true
 module.exports = async function duisAbove(configFileAbsPath, pathToTrabFile) {
 
 if ( !hshell.isReadableFile(configFileAbsPath) ) {
-  console.log(sty`{error %s {bold %s}}`, 'File not found:', configFileAbsPath)
+  log(sty`{error %s {bold %s}}`, 'File not found:', configFileAbsPath)
   return 401
 }
 
@@ -72,6 +72,9 @@ config['workingdirsDirAbsPath'] = workingdirsDirAbsPath
 // NOTE: lookupDirAbsPath
 delete config['lookupDirPathMask']
 config['lookupDirAbsPath'] = lookupDirAbsPath
+
+// NOTE: lookupAttachExtra
+config['lookupAttachExtra'] = (typeof config.lookupAttachExtra === 'function') ? config.lookupAttachExtra : () => {}
 
 if (config.test && config.test.commandToRun) {
   const testsDirPath = _.t(config.test.dirPathMask, startVariables)
@@ -186,12 +189,12 @@ async function runHookOn(context, name) {
     }
 
     _.wrapSyncOutput(() => {
-      console.log(command)
+      log(command)
       try {
         // if `command` needs to read from stdin, this not work properly with `set -v` mode
         hshell.runSafe(command)
       } catch (err) {
-        console.log(err)
+        log(err)
       }
     })
   }
@@ -220,6 +223,12 @@ async function confirmExecution(command, props = {}) {
 
 async function defineEntryDirName(currLookup, defaultEntryname) {
   const releasesOnLookupfile = Object.keys(currLookup);
+  if (!defaultEntryname) {
+    defaultEntryname = undefined
+  }
+
+  // TODO: mostrar os `prompts` numa caixa visual
+
   return _.prompt(
     `Identificador desse trabalho no arquivo de lookup`
   ).suggest({
@@ -240,12 +249,12 @@ async function defineEntryDirName(currLookup, defaultEntryname) {
 async function runAt(workingdirAbsPath) {
   if (isDev) { console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info(); }
 
+  log() // break line
   const { reply: keepRunning } = await _.prompt(
     `Continuar para: ${sty.warning(truncatePath(workingdirAbsPath))}`
   ).confirm()
 
   if (!keepRunning) return
-  console.log() // break line
 
   let __workingdirAbsPath = workingdirAbsPath
   let entryDirName = path.basename(workingdirAbsPath)
@@ -259,13 +268,13 @@ async function runAt(workingdirAbsPath) {
   //#region [4.2]
   const rootLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
   if (!rootLastCommitId) return // no commits
-  console.log(sty`{secondary %s {bold %s}}`, 'Último commit no root:', rootLastCommitId)
+  log(sty`{secondary %s {bold %s}}`, 'Último commit no root:', rootLastCommitId)
 
   let rootDirName = path.basename(rootDirAbsPath)
 
   let rootLookupFileAbsPath = path.join(config.lookupDirAbsPath, rootDirName + '.json')
   if ( !hshell.isReadableFile(rootLookupFileAbsPath) ) {
-    console.log(sty`{error %s {bold %s}}`, 'File not found:', rootLookupFileAbsPath)
+    log(sty`{error %s {bold %s}}`, 'File not found:', rootLookupFileAbsPath)
 
     const { reply } = await _.prompt(
       `Digitar ou selecionar um arquivo de lookup para ${sty.emph(rootDirName)}?`)
@@ -303,7 +312,7 @@ async function runAt(workingdirAbsPath) {
 
   const currLookup = _.loadJSON(rootLookupFileAbsPath)
   // if (_.getDeep(currLookup, ['_id']) === rootLastCommitId) {
-  //   console.log(sty.danger`✗ Nenhuma atualização no diretório`)
+  //   log(sty.danger`✗ Nenhuma atualização no diretório`)
   //   return
   // }
   //#endregion
@@ -319,27 +328,32 @@ async function runAt(workingdirAbsPath) {
 
   //#region [4.3]
   hshell.enterOnDir(__workingdirAbsPath)
-  console.log(sty`{warning {bold %s} %s}`, 'Em:', truncatePath(__workingdirAbsPath))
+  log(sty`{info {bold %s} %s}`, 'Em:', truncatePath(__workingdirAbsPath))
   //#endregion
 
   //#region [4.4]
   const workingdirLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
   if (!workingdirLastCommitId) return // no commits
-  console.log(sty`{secondary %s {bold %s}}`, 'Último commit:', workingdirLastCommitId)
+  log(sty`{secondary %s {bold %s}}`, 'Último commit:', workingdirLastCommitId)
 
-  entryDirName = await defineEntryDirName(currLookup, entryDirName)
+  entryDirName = await defineEntryDirName(currLookup, config.levelsToRootDir && entryDirName)
 
   const currStoredRelease = _.getDeep(currLookup, [entryDirName])
   if (_.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId) {
-    console.log(sty`{success {bold %s} %s {bold %s}}`, '🗸', 'Versão já registrada para', entryDirName)
-    return 200
+    log(sty`{success {bold %s} %s {bold %s}}`, '\u{2714}', 'Versão já registrada para', entryDirName)
+    const { reply: keepRunning } = await _.prompt(
+      sty.red.bgBlack(`Continuar mesmo assim`)
+    ).confirm({ default: false })
+
+    if (!keepRunning) return 200
   }
   //#endregion
 
   if (config.initServer) {
     //#region [4.5]
     const serverAddress = 'http://' + config.initServer(__workingdirAbsPath).hostaddress
-    console.log(sty`{success %s {bold %s}}`, 'Server iniciado em:', serverAddress)
+    // FIXME: esperar validar a conexão do server
+    log(sty`{success %s {bold %s}}`, 'Server iniciado em:', serverAddress)
     await config.openBrowserAt(serverAddress)
     //#endregion
   } else {
@@ -358,7 +372,7 @@ async function runAt(workingdirAbsPath) {
           hshell.exec(commandToRunTest, { silent: false }))
       }
     } else {
-      console.log(sty`{debug %s {red %s}}`, 'Nenhum teste para', entryDirName)
+      log(sty`{debug %s {red %s}}`, 'Nenhum teste para', entryDirName)
     }
   }
   //#endregion
@@ -376,9 +390,11 @@ async function runAt(workingdirAbsPath) {
     if (updateLookup) {
       const workingdirLookup = {
         _id: workingdirLastCommitId,
+        extra: config.lookupAttachExtra(answersWorkingdirQuestions),
         prompts: answersWorkingdirQuestions &&
                  _.mapPairsToObj(Object.entries(answersWorkingdirQuestions), ['q', 'a']),
       }
+
       _.setDeep(currLookup, [entryDirName], workingdirLookup)
       _.writeJSON(rootLookupFileAbsPath, currLookup)
     }

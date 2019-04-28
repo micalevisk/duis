@@ -95,6 +95,8 @@ Iniciar processo com **`$ duis . TRAB1`**
 {
   "<TRABNAME_CORRIGIDO>": {
     "_id": "<TRABNAME_CORRIGIDO_COMMIT_ID>", // commit que gerou os `prompts` abaixo
+    "extra": { // retornado pela aplicação da função `CONFIG#lookupAttachExtra` sobre as respostas de `CONFIG#workingdirQuestions`
+    },
     "prompts": [ // perguntas e respostas das questões definidas em `CONFIG#workingdirQuestions`
       {
         "q": "<QUESTION_NAME>",

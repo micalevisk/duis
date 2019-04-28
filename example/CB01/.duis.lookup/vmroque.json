@@ -1,6 +1,14 @@
 {
   "HTML": {
     "_id": "d09b078",
-    "prompts": []
+    "extra": {
+      "nota": 10
+    },
+    "prompts": [
+      {
+        "q": "cell:nota",
+        "a": "exato"
+      }
+    ]
   }
 }

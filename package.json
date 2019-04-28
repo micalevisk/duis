@@ -5,10 +5,8 @@
   "bin": {
     "duis": "bin/duis"
   },
-  "main": "index.js",
   "scripts": {
-    "start": "NODE_ENV=production node .",
-    "dev": "nodemon --inspect-brk ."
+    "test": "duis example/ HTML"
   },
   "keywords": [],
   "author": "Micael Levi <mykael2010@hotmail.com> (micalevisk.github.io)",
@@ -18,7 +16,6 @@
     "inquirer": "^6.2.2",
     "inquirer-fuzzy-path": "^2.0.3",
     "inquirer-prompt-suggest": "^0.1.0",
-    "open": "^6.0.0",
     "shelljs": "^0.8.3"
   },
   "devDependencies": {

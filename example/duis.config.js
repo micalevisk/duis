@@ -29,7 +29,7 @@ root dir = diretório que contém o `.git`
 // ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝███████║
 //  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
 
-const myQuestionsToEachWorkingdir = require('./duis.questions')
+const { myQuestionsToEachWorkingdir, myLookupAttachExtra } = require('./duis.questions')
 
 // perguntas cuja respostas definirão mais variáveis na config abaixo
 // Se `name` estiver com todas as letras em maiúsculas, a resposta será tratada como variável a ser usada nos templates
@@ -91,6 +91,9 @@ module.exports = {
 
   // questões a serem respondidas após realizar os testes, i.e., após abrir o navegador no "workingdir" corrente
   workingdirQuestions: myQuestionsToEachWorkingdir,
+
+  // função pura que receberá as repostas dadas a `workingdirQuestions` retornará um objeto que será o valor da propriedade `extra` do objeto a ser gravado no lookup file, para o workingdir corrente
+  lookupAttachExtra: myLookupAttachExtra,
 
   // comandos a serem executados na linha de comandos no diretório "root" (git directory)
   _commandsForEachRootDir: {
