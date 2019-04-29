@@ -100,11 +100,9 @@ if (config.test && config.test.commandToRun) {
   delete config['test']
 }
 
-// NOTE: lookupAttachExtra
-config['lookupAttachExtra'] = () => {}
-if (config.lookupAttachExtra instanceof Function) {
+if (typeof config.lookupAttachExtra !== 'function') {
   // NOTE: lookupAttachExtra
-  config['lookupAttachExtra'] = config.lookupAttachExtra
+  config['lookupAttachExtra'] = () => {}
 }
 
 // NOTE: openBrowserAt
@@ -213,12 +211,10 @@ async function confirmExecution(command, props = {}) {
 }
 
 async function defineEntryDirName(currLookup, defaultEntryname) {
-  const releasesOnLookupfile = Object.keys(currLookup);
+  const releasesOnLookupfile = Object.keys(currLookup)
   if (!defaultEntryname) {
     defaultEntryname = undefined
   }
-
-  // TODO: mostrar os `prompts` numa caixa visual
 
   return _.prompt(
     `Identificador desse trabalho no arquivo de lookup`

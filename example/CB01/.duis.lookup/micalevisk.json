@@ -10,5 +10,24 @@
         "a": "exato"
       }
     ]
+  },
+  "PHP1": {
+    "_id": "12d896c",
+    "extra": {
+      "nota": 9.9
+    },
+    "prompts": [
+      {
+        "q": "cell:nota",
+        "a": "quase"
+      },
+      {
+        "q": "note:faltou",
+        "a": [
+          "a",
+          "as"
+        ]
+      }
+    ]
   }
 }
