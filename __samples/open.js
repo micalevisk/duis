@@ -25,9 +25,9 @@ const open = require('open');
   console.log('fechou')
   */
 
-  const b = await open('https://google.com', {app: ['google-chrome', '--incognito']})
+  const b = await open('https://google.com', { app: ['google-chrome', '--incognito'] })
   b.once('close', console.log.bind(null, 'fechou'))
-  console.log('abriu')
+  console.log('abriu?', b.connected)
 
   } catch (err) {
     console.log(err)

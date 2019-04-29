@@ -63,7 +63,7 @@ module.exports = {
   // navegador que abrirá na pasta do aluno (ou o server, se iniciado)
   _browser: {
     name: 'chrome',
-    opts: '--incognito'
+    opts: '--incognito' // as opções que o navegador suporta, separadas por espaço
   },
 
   // `true` se o navegador deve ser aberto automaticamente a cada "workingdir"

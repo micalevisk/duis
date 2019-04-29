@@ -82,8 +82,6 @@ Iniciar processo com **`$ duis . TRAB1`**
         2. Parar o servidor (se iniciado)
         3. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onBeforeLeave` (perguntando antes de executar cada, se `CONFIG#safeMode` for `true`)
 
-    10. Fechar o navegador, se aberto em `[6]`
-
 ## Tips
 - <kbd>Esc</kbd> para fechar o programa (como o <kbd>ctrl+c</kbd>)
 - Em perguntas que fornecem um _tab suggestions_, as sugestões são de nomes lidos de alguma fonte. **Ex:** As sugestões ao definir o identificador do trabalho no arquivo de lookup são de identificadores em uso

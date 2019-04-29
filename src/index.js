@@ -73,9 +73,6 @@ config['workingdirsDirAbsPath'] = workingdirsDirAbsPath
 delete config['lookupDirPathMask']
 config['lookupDirAbsPath'] = lookupDirAbsPath
 
-// NOTE: lookupAttachExtra
-config['lookupAttachExtra'] = (typeof config.lookupAttachExtra === 'function') ? config.lookupAttachExtra : () => {}
-
 if (config.test && config.test.commandToRun) {
   const testsDirPath = _.t(config.test.dirPathMask, startVariables)
   const testsDirAbsPath = pathJoinWithRoot(testsDirPath)
@@ -103,31 +100,25 @@ if (config.test && config.test.commandToRun) {
   delete config['test']
 }
 
+// NOTE: lookupAttachExtra
+config['lookupAttachExtra'] = () => {}
+if (config.lookupAttachExtra instanceof Function) {
+  // NOTE: lookupAttachExtra
+  config['lookupAttachExtra'] = config.lookupAttachExtra
+}
+
 // NOTE: openBrowserAt
 config['openBrowserAt'] = () => {}
-// NOTE: killBrowser
-config['killBrowser'] = () => {}
 if (config.browser && config.browser.name) {
   const browserName = config.browser.name
+
   // NOTE: openBrowserAt
-  config['openBrowserAt'] = async function openBrowserAt(URL, onProcessClose) {
-    const _openBrowser = () => {
-      const browserProcess = openBrowser({
-        name: browserName,
-        path: URL,
-        opts: config.browser.opts, onProcessClose,
-      })
-
-      // NOTE: killBrowser
-      config['killBrowser'] = function killBrowser() {
-        if (browserProcess) {
-          browserProcess.kill('SIGTERM')
-          browserProcess.kill('SIGINT')
-        }
-      }
-
-      return browserProcess
-    }
+  config['openBrowserAt'] = async function openBrowserAt(URL, usingFileProtocol) {
+    const _openBrowser = openBrowser.bind(null, browserName, {
+      path: URL,
+      opts: config.browser.opts,
+      isFile: usingFileProtocol,
+    })
 
     if (config.autoOpenBrowser) {
       return _openBrowser()
@@ -151,7 +142,7 @@ if (config.serverPort) {
   // NOTE: initServer
   config['initServer'] = function initServer(docroot, onProcessClose = () => {}) {
     phpServer.initServer(docroot).on('close', onProcessClose)
-    _.addHandlerToSIGINT(phpServer.shutDown.bind(phpServer)) // making sure the server will close
+    _.addToOnCleanup(phpServer.shutDown.bind(phpServer))
     return phpServer
   }
 
@@ -311,11 +302,6 @@ async function runAt(workingdirAbsPath) {
   }
 
   const currLookup = _.loadJSON(rootLookupFileAbsPath)
-  // if (_.getDeep(currLookup, ['_id']) === rootLastCommitId) {
-  //   log(sty.danger`✗ Nenhuma atualização no diretório`)
-  //   return
-  // }
-  //#endregion
 
   // making sure that the `__workingdirAbsPath` is a valid directory
   if (!hshell.isDirectory(workingdirAbsPath)) {
@@ -358,7 +344,7 @@ async function runAt(workingdirAbsPath) {
     //#endregion
   } else {
     //#region [4.6]
-    await config.openBrowserAt('file:///' + workingdirAbsPath)
+    await config.openBrowserAt(workingdirAbsPath, true)
     //#endregion
   }
 
@@ -411,10 +397,6 @@ async function runAt(workingdirAbsPath) {
 
   config.stopServer()
   await runHookOn(userCommandsHooks, 'onBeforeLeave')
-  //#endregion
-
-  //#region [4.10]
-  config.killBrowser()
   //#endregion
 }
 
