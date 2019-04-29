@@ -6,7 +6,7 @@
     "duis": "bin/duis"
   },
   "scripts": {
-    "test": "duis example/ HTML"
+    "test": "node --inspect ./bin/duis example/ HTML"
   },
   "keywords": [],
   "author": "Micael Levi <mykael2010@hotmail.com> (micalevisk.github.io)",
