@@ -36,6 +36,7 @@ function setupProcessListeners() {
     if (key === '\u0003' || key === '\x1b') {
       process.emit('cleanup')
       process.emit('exit')
+      process.exit()
       return
     }
   })

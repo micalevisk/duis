@@ -85,6 +85,7 @@ Iniciar processo com **`$ duis . TRAB1`**
 ## Tips
 - <kbd>Esc</kbd> para fechar o programa (como o <kbd>ctrl+c</kbd>)
 - Em perguntas que fornecem um _tab suggestions_, as sugestões são de nomes lidos de alguma fonte. **Ex:** As sugestões ao definir o identificador do trabalho no arquivo de lookup são de identificadores em uso
+- As respostas ficam em destaque para indicar que se referem a algo já definido (no contexto da pergunta)
 
 ## Formato do arquivo de "lookup" gerado pra cada _working dir_
 > o nome do arquivo deve ser o mesmo do diretório git em que o `working dir` está

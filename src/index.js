@@ -173,7 +173,7 @@ async function runHookOn(context, name) {
 
   for (const command of context[name]) {
     if (config.safeMode) {
-      const { reply: canRunCommand } = await confirmExecution(command)
+      const { reply: canRunCommand } = await confirmCmdExecution(command)
       if (!canRunCommand) continue
     }
 
@@ -205,24 +205,32 @@ function getLastCommit({ until = '', parent = 'remotes/origin/master', ref = '.'
     .runSafe(`git rev-list -1 --until="${until}" --abbrev-commit ${parent} ${ref}`)
 }
 
-async function confirmExecution(command, props = {}) {
-  return _.prompt(`Executar ${sty.danger(command)}`)
-    .confirm(props)
+async function confirmCmdExecution(command, props = {}) {
+  return _.prompt(
+    `Executar ${sty.danger(command)}`
+  ).confirm(props)
 }
 
-async function defineEntryDirName(currLookup, defaultEntryname) {
-  const releasesOnLookupfile = Object.keys(currLookup)
-  if (!defaultEntryname) {
-    defaultEntryname = undefined
+async function defineEntryDirName(currLookup, defaultEntryDirName) {
+  const entryNamesOnLookupfile = Object.keys(currLookup)
+
+  if (!defaultEntryDirName) { // forces to be 'undefined' if is falsy
+    defaultEntryDirName = undefined
   }
 
-  return _.prompt(
+  const isAlreadyOnLookup = input =>
+    entryNamesOnLookupfile.includes(input) ? sty.vdanger(input) : input
+
+  const newEntryDirName = await _.prompt(
     `Identificador desse trabalho no arquivo de lookup`
   ).suggest({
-    default: defaultEntryname,
-    suggestions: releasesOnLookupfile,
+    default: defaultEntryDirName,
+    suggestions: entryNamesOnLookupfile,
+    transformer: isAlreadyOnLookup,
     validate: answer => !answer.trim() ? 'Informe algo' : true
-  }).then(({ reply }) => reply.trim())
+  })
+
+  return newEntryDirName
 }
 
 
@@ -280,14 +288,18 @@ async function runAt(workingdirAbsPath) {
 
       rootLookupFileAbsPath = reply
     } else {
+      const lookupExists = (lookupFilename) => {
+        const pathToFile = path.join(config.lookupDirAbsPath, lookupFilename + '.json')
+        return hshell.isReadableFile(pathToFile)
+      }
+
       const { reply: lookupFilename } = await _.prompt(
         `Informe o nome do arquivo a ser criado em ${sty.emph(truncatePath(config.lookupDirAbsPath))} ${sty.secondary('[sem a extensão]')}`)
-        .input({
+        .warning({
           default: path.basename(rootLookupFileAbsPath, '.json'),
-          validate(input) {
-            if (!input.toLowerCase().trim()) return 'Informe algo'
-            return true
-          }
+          warnif: lookupExists,
+          warning: 'Já existe um arquivo com esse nome',
+          validate: input => !input.trim() ? 'Informe algo': true,
         })
 
       rootLookupFileAbsPath = path.join(config.lookupDirAbsPath, lookupFilename + '.json')
@@ -318,16 +330,21 @@ async function runAt(workingdirAbsPath) {
   if (!workingdirLastCommitId) return // no commits
   log(sty`{secondary %s {bold %s}}`, 'Último commit:', workingdirLastCommitId)
 
-  entryDirName = await defineEntryDirName(currLookup, config.levelsToRootDir && entryDirName)
+  for (let repeatPrompt = true; repeatPrompt; ) {
+    entryDirName = await defineEntryDirName(currLookup, config.levelsToRootDir && entryDirName)
 
-  const currStoredRelease = _.getDeep(currLookup, [entryDirName])
-  if (_.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId) {
-    log(sty`{success {bold %s} %s {bold %s}}`, '\u{2714}', 'Versão já registrada para', entryDirName)
-    const { reply: keepRunning } = await _.prompt(
-      sty.red.bgBlack(`Continuar mesmo assim`)
-    ).confirm({ default: false })
+    const currStoredRelease = _.getDeep(currLookup, [entryDirName])
+    const isSameVersion = _.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId
+    repeatPrompt = isSameVersion
 
-    if (!keepRunning) return 200
+    if (isSameVersion) {
+      log(sty`{success {bold %s} %s {bold %s}}`, '\u{2714}', 'Versão já registrada para', entryDirName)
+      const { reply: keepRunning } = await _.prompt(sty.vdanger(
+        `Continuar mesmo assim`
+      )).confirm({ default: false })
+
+      repeatPrompt = !keepRunning
+    }
   }
   //#endregion
 
@@ -348,7 +365,7 @@ async function runAt(workingdirAbsPath) {
   if (config.commandOnTest) {
     const commandToRunTest = config.commandOnTest(entryDirName)
     if (commandToRunTest) {
-      const { reply: canRunTests } = await confirmExecution(commandToRunTest)
+      const { reply: canRunTests } = await confirmCmdExecution(commandToRunTest)
       if (canRunTests) {
         _.wrapSyncOutput(() =>
           hshell.exec(commandToRunTest, { silent: false }))
@@ -359,7 +376,7 @@ async function runAt(workingdirAbsPath) {
   }
   //#endregion
 
-  for (let repeatPromp = true; repeatPromp; ) {
+  for (let repeatPrompt = true; repeatPrompt; ) {
     //#region [4.8]
     const answersWorkingdirQuestions = await _.rawPrompt(config.workingdirQuestions)
     //#endregion
@@ -385,8 +402,8 @@ async function runAt(workingdirAbsPath) {
       `Reavaliar ` + sty.secondary`-- definindo outro identificador`
     ).confirm({ default: false })
 
-    repeatPromp = mustRepeatPrompt
-    if (repeatPromp) {
+    repeatPrompt = mustRepeatPrompt
+    if (repeatPrompt) {
       entryDirName = await defineEntryDirName(currLookup)
     }
   }
@@ -400,6 +417,8 @@ async function runAt(workingdirAbsPath) {
 
   try {
 
+    const parentDirs = hshell.listDirectoriesFrom(config.workingdirsDirAbsPath)
+
     const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
     const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath) // may throw an error
 
@@ -411,6 +430,11 @@ async function runAt(workingdirAbsPath) {
     const blackListDirectories = [
       config.testsDirAbsPath,
     ]
+
+    _.displayBox([
+      `Total: ${sty.bold(parentDirs.length)}`,
+      `Encontrados: ${sty.bold(workingdirs.length)}`,
+    ])
 
     for (const workingdirAbsPath of workingdirs) {
       if (blackListDirectories.includes(workingdirAbsPath)) {

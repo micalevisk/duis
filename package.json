@@ -12,8 +12,9 @@
   "author": "Micael Levi <mykael2010@hotmail.com> (micalevisk.github.io)",
   "license": "MIT",
   "dependencies": {
+    "boxen": "^3.2.0",
     "chalk": "^2.4.2",
-    "inquirer": "^6.2.2",
+    "inquirer": "^6.3.1",
     "inquirer-fuzzy-path": "^2.0.3",
     "inquirer-prompt-suggest": "^0.1.0",
     "open": "^6.2.0",
