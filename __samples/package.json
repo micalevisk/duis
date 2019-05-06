@@ -6,5 +6,8 @@
     "listr-input": "^0.1.3",
     "open": "^6.2.0",
     "ora": "^3.4.0"
+  },
+  "dependencies": {
+    "chalk-pipe": "^2.0.0"
   }
 }

@@ -58,7 +58,7 @@ module.exports = {
   workingdirParentDirPathMask: './{TURMA}/{NICK_ALUNO}/',
 
   // a partir do diretório "workingdir", é preciso voltar quantos níveis para ir ao que tem o `.git` (do aluno)?
-  levelsToRootDir: 1,
+  levelsToRootDir: 1, // 0 se não for existir um diretório de trabalho específico, i.e., usado em `duis .`
 
   // navegador que abrirá na pasta do aluno (ou o server, se iniciado)
   _browser: {

@@ -1,4 +1,4 @@
-const inquirer = require('inquirer');
+const inquirer = require('../node_modules/inquirer');
 inquirer.registerPrompt('fuzzypath', require('inquirer-fuzzy-path'))
 
 const q_input = {
@@ -109,15 +109,15 @@ const q_editor = {
 /***************************************************/
 
 const perguntas1 = [ q_input, q_confirm, q_list, q_checkbox,
-    {
-      when: function (response) {
-        return response.casado;
-      },
-      type: 'input',
-      name: 'hijos',
-      message: 'Número de hijos?',
-      default: 0
+  {
+    when: function (response) {
+      return response.casado;
     },
+    type: 'input',
+    name: 'hijos',
+    message: 'Número de hijos?',
+    default: 0
+  },
 ];
 
 const perguntas2 = [ q_expand, q_password ];
@@ -146,76 +146,32 @@ function print(answers) {
 })()
 */
 
+inquirer.registerPrompt('validate-on-the-fly', require('./inquirer-validate-on-the-fly'));
+inquirer.registerPrompt('warning-on-the-fly', require('../lib/inquirer-warning-on-the-fly'));
+const chalk = require('chalk');
+
 ;(async function() {
 
-async function askUntilReturnTrue(question) {
-  const { [question.name]: repeat } = await inquirer.prompt(question);
-  return repeat ? repeat : askUntilReturnTrue(question)
-}
-/*
-function prompt(props) {
-  return new Proxy({}, {
-    get(_, propName) {
-      return (otherProps) =>
-        inquirer.prompt({
-          name: 'reply',
-          type: propName,
-          ...props,
-          ...otherProps
-        })
-    },
-  })
-}
-
-const p = new Proxy({}, {
-  get(_, propName) {
-
+  async function askUntilReturnTrue(question) {
+    const { [question.name]: repeat } = await inquirer.prompt(question);
+    return repeat ? repeat : askUntilReturnTrue(question)
   }
-})
 
-console.log('>>>>>')
-const x = await prompt({
-  // name: 'proceed',
-  message: 'Finalizar avaliação deste aluno?'
-}).list({ choices: ['sim'] })
-console.log('<<<<<', x)
-*/
-/*
-const proceed = await askUntilReturnTrue({
-  name: 'proceed',
-  type: 'list',
-  message: 'Finalizar avaliação deste aluno?',
-  choices: ['sim', 'não'],
-  default: 'sim',
-  filter: input => input === 'sim'
-})
+  const warningWhen = answer => ['foo', 'bar', 123].includes(answer)
+  const promptList = [
+    {
+      type: 'validate-on-the-fly',
+      type: 'warning-on-the-fly',
+      name: 'text',
+      message: 'Text color',
+      default: 1234,
+      warning: 'Maybe this is not a good name',
+      warnif: input => ['foo', 'bar', 123].includes(input),
+      // transformer: input => warningWhen(input) ? chalk.red(input) : input,
+      validate: answer => ['foo', 'bar', 123].includes(answer) ? 'Nome inválido' : true
+    }
+  ];
 
-console.log('>>', proceed)
-*/
-
-const x = await inquirer.prompt([
-  {
-    type: 'fuzzypath',
-    name: 'path',
-    excludePath: nodePath => nodePath.startsWith('node_modules'),
-      // excludePath :: (String) -> Bool
-      // excludePath to exclude some paths from the file-system scan
-    itemType: 'any',
-      // itemType :: 'any' | 'directory' | 'file'
-      // specify the type of nodes to display
-      // default value: 'any'
-      // example: itemType: 'file' - hides directories from the item list
-    rootPath: 'example',
-      // rootPath :: String
-      // Root search directory
-    message: 'Select a target directory for your component:',
-    default: 'CB01/',
-    suggestOnly: false,
-      // suggestOnly :: Bool
-      // Restrict prompt answer to available choices or use them as suggestions
-  }
-]);
-
-console.log(x)
+  await inquirer.prompt(promptList)
 
 })()
