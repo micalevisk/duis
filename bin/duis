@@ -1,2 +1,16 @@
 #!/usr/bin/env node
-require('../')()
+'use strict';
+
+const program = require('commander');
+const pkg = require('../package.json');
+
+program
+  .description(pkg.description)
+  .version(pkg.version);
+
+program
+  .command('init [options] [path/to/root]', 'create a `duis.config.js` file')
+  .command('checkup [path/to/config_file]', 'check all lookup files')
+  .command('exec [path/to/config_file] <path/to/trab_file>', 'run Duis',  { isDefault: true });
+
+program.parse(process.argv);

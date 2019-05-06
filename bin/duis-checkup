@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+'use strict';
+
+const program = require('commander');
+
+program
+  .description('Verificar se todos os arquivos de lookup estão atualizados')
+  .arguments('[path/to/config_file]')
+  .parse(process.argv);
+
+// TODO

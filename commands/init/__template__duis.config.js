@@ -29,7 +29,18 @@ root dir = diretório que contém o `.git`
 // ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝███████║
 //  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
 
-const { myQuestionsToEachWorkingdir, myLookupAttachExtra } = require('./duis.questions')
+
+const myQuestionsToEachWorkingdir = [
+  // TODO: implemente suas perguntas aqui
+  // referência: https://www.npmjs.com/package/inquirer#prompt
+]
+
+const lookupAttachExtra = (answers) => {
+  // TODO: implemente o objeto que será o valor da propriedade `extra`
+  return {
+
+  }
+}
 
 // perguntas cuja respostas definirão mais variáveis na config abaixo
 // Se `name` estiver com todas as letras em maiúsculo, a resposta será tratada como variável a ser usada nos templates
@@ -61,7 +72,7 @@ module.exports = {
   levelsToRootDir: 1, // 0 se não for existir um diretório de trabalho específico, i.e., usado em `duis .`
 
   // navegador que abrirá na pasta do aluno (ou o server, se iniciado)
-  _browser: {
+  browser: {
     name: 'chrome',
     opts: '--incognito' // as opções que o navegador suporta, separadas por espaço
   },
@@ -77,13 +88,13 @@ module.exports = {
   // porta em que o servidor PHP tentará escutar
   serverPort: 8080,
 
-  _test: {
+  test: {
     // como devem terminar os arquivos de testes, i.e, a extensão deles
     fileExtName: '.test.js',
     // template do diretório em que estarão descritos os testes para cada "trabalho" (workingdir)
     dirPathMask: './{TURMA}/__tests__', // os arquivos devem estar no formato: `<ENTRY_DIR>.<fileExtName>`
     // comando que será executado sobre o arquivo de "teste" do trabalho corrente
-    commandToRun: 'testcafe chrome:headless --color -u'
+    commandToRun: ''
   },
 
   // questões a serem respondidas imediatamente após o setup das config
@@ -96,12 +107,11 @@ module.exports = {
   lookupAttachExtra: myLookupAttachExtra,
 
   // comandos a serem executados na linha de comandos no diretório "root" (git directory)
-  _commandsForEachRootDir: {
+  commandsForEachRootDir: {
     // antes de abrir o navegador na pasta do aluno (assim que entrar no workingdir)
     onEnter: [
       'git checkout master',
       'git pull origin master',
-      // 'git fetch origin master',
     ],
     // após parar o servidor (antes de seguir para o próximo workingdir)
     onBeforeLeave: [

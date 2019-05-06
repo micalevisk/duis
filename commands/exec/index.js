@@ -1,19 +1,15 @@
 const path = require('path')
-const duis = require('./src')
+const duis = require('../../src')
 
-async function duisBootstrap() {
-  if (process.argv.length <= 2) return // TODO: show help
+const { DUIS_CONFIG_FILENAME } = require('../../lib').constants
 
-  // assuming: $ duis <PATH/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
-  let [,, pathToConfigFile, pathToTrabFile] = process.argv
-  // treat as: $ duis <PATH/TO/TRAB-FILE>
-  if (process.argv.length === 3) {
-    pathToTrabFile = pathToConfigFile
-    pathToConfigFile = '.'
-  }
-
-  const configFilename = 'duis.config.js'
-  const configFileAbsPath = path.resolve(pathToConfigFile, configFilename)
+/**
+ *
+ * @param {string} pathToConfigFile
+ * @param {string} pathToTrabFile
+ */
+module.exports = async function exec(pathToConfigFile, pathToTrabFile) {
+  const configFileAbsPath = path.resolve(pathToConfigFile, DUIS_CONFIG_FILENAME)
 
   setupProcessListeners()
   return await duis(configFileAbsPath, pathToTrabFile)
@@ -41,6 +37,3 @@ function setupProcessListeners() {
     }
   })
 }
-
-
-module.exports = duisBootstrap

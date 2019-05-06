@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+'use strict';
+
+const program = require('commander');
+const { exec } = require('../commands');
+
+program
+  .description('Executar o Duis usando o arquivo de configuração informado.')
+  .arguments('[PATH/TO/CONFIG_FILE] <PATH/TO/TRAB_FILE>')
+  // .option('--entry', 'set the lookup identifier (instead of "PATH/TO/TRAB_FILE")')
+  .parse(process.argv);
+
+if (program.args.length < 1) {
+  program.help();
+}
+
+// assuming: $ duis <PATH/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
+let [pathToConfigFile, pathToTrabFile] = program.args;
+// otherwise: $ duis <PATH/TO/TRAB-FILE>
+if (process.argv.length === 3) {
+  pathToTrabFile = pathToConfigFile;
+  pathToConfigFile = '.';
+}
+
+exec(pathToConfigFile, pathToTrabFile);

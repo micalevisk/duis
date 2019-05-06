@@ -1,0 +1,16 @@
+#!/usr/bin/env node
+'use strict';
+
+const program = require('commander');
+const { init } = require('../commands');
+
+program
+  .description('Criar o arquivo "duis.config.js" com os valores padrões.')
+  .arguments('[path/to/root]')
+  .option('-f, --force', 'forces the creation')
+  .parse(process.argv);
+
+const pathToRootDir = program.args[0] || '.';
+const canOverride = program.force;
+
+init(pathToRootDir, canOverride)
