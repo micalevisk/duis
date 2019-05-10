@@ -221,7 +221,7 @@ async function defineEntryDirName(currLookup, defaultEntryDirName) {
   const isAlreadyOnLookup = input =>
     entryNamesOnLookupfile.includes(input) ? sty.vdanger(input) : input
 
-  const newEntryDirName = await _.prompt(
+  const { reply: newEntryDirName } = await _.prompt(
     `Identificador desse trabalho no arquivo de lookup`
   ).suggest({
     default: defaultEntryDirName,
