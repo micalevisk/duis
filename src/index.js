@@ -179,10 +179,11 @@ async function runHookOn(context, name) {
     }
 
     _.wrapSyncOutput(() => {
-      log(command)
+      log(sty`{secondary {bold %s} %s}`, '$', command)
       try {
         // if `command` needs to read from stdin, this not work properly with `set -v` mode
-        hshell.runSafe(command)
+        const commandOutput = hshell.runSafe(command)
+        log(sty`{secondary %s}`, commandOutput)
       } catch (err) {
         log(err)
       }
