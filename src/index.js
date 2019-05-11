@@ -13,7 +13,7 @@ hshell.config.silent = true
  * @param {string} configFileAbsPath
  * @param {string} pathToTrabFile
  */
-module.exports = async function duisAbove(configFileAbsPath, pathToTrabFile) {
+module.exports = async function duisAbove(configFileAbsPath, pathToTrabFile, priorityConfigs) {
 
 if ( !hshell.isReadableFile(configFileAbsPath) ) {
   log(sty`{error %s {bold %s}}`, 'File not found:', configFileAbsPath)
@@ -41,6 +41,7 @@ const defaultStartQuestions = [
 
 //#region [1]
 const config = _.requireUpdated(configFileAbsPath)
+Object.assign(config, _.filter(priorityConfigs, v => v !== undefined))
 //#endregion
 
 //#region [2]
@@ -331,7 +332,8 @@ async function runAt(workingdirAbsPath) {
   log(sty`{secondary %s {bold %s}}`, 'Último commit:', workingdirLastCommitId)
 
   for (let repeatPrompt = true; repeatPrompt; ) {
-    entryDirName = await defineEntryDirName(currLookup, config.entryDirName || config.levelsToRootDir && entryDirName)
+    const defaultEntryDirName = config.entryDirName || (config.levelsToRootDir && entryDirName)
+    entryDirName = await defineEntryDirName(currLookup, defaultEntryDirName)
 
     const currStoredRelease = _.getDeep(currLookup, [entryDirName])
     const isSameVersion = _.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId

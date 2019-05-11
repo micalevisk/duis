@@ -62,6 +62,9 @@ module.exports = {
 
   /*************************** OPCIONAIS ***************************/
 
+  // nome padrão para o identificador no lookup
+  entryDirName: '', // se for um valor falsy, o padrão será inferido a partir dos argumentos do CLI
+
   // navegador que abrirá na pasta do aluno (ou o server, se iniciado)
   _browser: {
     name: 'chrome',

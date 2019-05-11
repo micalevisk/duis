@@ -7,12 +7,13 @@ const { DUIS_CONFIG_FILENAME } = require('../../lib').constants
  *
  * @param {string} pathToConfigFile
  * @param {string} pathToTrabFile
+ * @param {object} priorityConfigs
  */
-module.exports = async function exec(pathToConfigFile, pathToTrabFile) {
+module.exports = async function exec(pathToConfigFile, pathToTrabFile, priorityConfigs = {}) {
   const configFileAbsPath = path.resolve(pathToConfigFile, DUIS_CONFIG_FILENAME)
 
   setupProcessListeners()
-  return await duis(configFileAbsPath, pathToTrabFile)
+  return await duis(configFileAbsPath, pathToTrabFile, priorityConfigs)
 }
 
 function setupProcessListeners() {
