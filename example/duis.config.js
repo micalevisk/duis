@@ -60,19 +60,14 @@ module.exports = {
   // a partir do diretório "workingdir", é preciso voltar quantos níveis para ir ao que tem o `.git` (do aluno)?
   levelsToRootDir: 1, // 0 se não for existir um diretório de trabalho específico, i.e., usado em `duis .`
 
+  /*************************** OPCIONAIS ***************************/
+
   // navegador que abrirá na pasta do aluno (ou o server, se iniciado)
   _browser: {
     name: 'chrome',
-    opts: '--incognito' // as opções que o navegador suporta, separadas por espaço
+    opts: '--incognito', // as opções que o navegador suporta, separadas por espaço
+    autoOpen: false, // se o navegador deve ser aberto automaticamente a cada "workingdir"
   },
-
-  // `true` se o navegador deve ser aberto automaticamente a cada "workingdir"
-  autoOpenBrowser: false,
-
-  // `true` para sempre confirmar a execução de comandos definidos pelo usuário
-  safeMode: true,
-
-  /*************************** OPCIONAIS ***************************/
 
   // porta em que o servidor PHP tentará escutar
   serverPort: 8080,
@@ -94,6 +89,9 @@ module.exports = {
 
   // função pura que receberá as repostas dadas a `workingdirQuestions` retornará um objeto que será o valor da propriedade `extra` do objeto a ser gravado no lookup file, para o workingdir corrente
   lookupAttachExtra: myLookupAttachExtra,
+
+  // `true` para sempre confirmar a execução de comandos definidos pelo usuário
+  safe: true,
 
   // comandos a serem executados na linha de comandos no diretório "root" (git directory)
   _commandsForEachRootDir: {

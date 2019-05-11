@@ -118,7 +118,7 @@ if (config.browser && config.browser.name) {
       isFile: usingFileProtocol,
     })
 
-    if (config.autoOpenBrowser) {
+    if (config.browser.autoOpen) {
       return _openBrowser()
     }
 
@@ -331,7 +331,7 @@ async function runAt(workingdirAbsPath) {
   log(sty`{secondary %s {bold %s}}`, 'Último commit:', workingdirLastCommitId)
 
   for (let repeatPrompt = true; repeatPrompt; ) {
-    entryDirName = await defineEntryDirName(currLookup, config.levelsToRootDir && entryDirName)
+    entryDirName = await defineEntryDirName(currLookup, config.entryDirName || config.levelsToRootDir && entryDirName)
 
     const currStoredRelease = _.getDeep(currLookup, [entryDirName])
     const isSameVersion = _.getDeep(currStoredRelease, ['_id']) === workingdirLastCommitId
