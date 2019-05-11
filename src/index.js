@@ -242,12 +242,12 @@ async function defineEntryDirName(currLookup, defaultEntryDirName) {
 // ██║  ██║╚██████╔╝██║ ╚████║
 // ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 
-async function runAt(workingdirAbsPath) {
+async function runAt(workingdirAbsPath, idx) {
   if (isDev) { console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info(); }
 
   log() // break line
   const { reply: keepRunning } = await _.prompt(
-    `Continuar para: ${sty.warning(truncatePath(workingdirAbsPath))}`
+    `${sty.secondary(`[${idx}]`)} Continuar para: ${sty.warning(truncatePath(workingdirAbsPath))}`
   ).confirm()
 
   if (!keepRunning) return
@@ -438,12 +438,14 @@ async function runAt(workingdirAbsPath) {
       `Encontrados: ${sty.bold(workingdirs.length)}`,
     ])
 
-    for (const workingdirAbsPath of workingdirs) {
+    for (let i = 0; i < workingdirs.length; ++i) {
+      const workingdirAbsPath = workingdirs[i]
+
       if (blackListDirectories.includes(workingdirAbsPath)) {
         continue
       }
 
-      const code = await runAt(workingdirAbsPath)
+      const code = await runAt(workingdirAbsPath, i + 1)
       if (code === 401) return
       if (code === 402) return
     }
