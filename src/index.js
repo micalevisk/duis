@@ -9,6 +9,14 @@ if (isDev) hshell.set('-v')
 hshell.config.silent = true
 
 
+const AVAILABLE_HOOKS = [
+  'onEnterWD',
+  'beforeLeaveWD',
+  'beforeExit',
+  'onFinish',
+]
+
+
 /**
  * @param {string} configFileAbsPath
  * @param {string} pathToTrabFile
@@ -59,12 +67,19 @@ config['startAnswers'] = startAnswers
 //#endregion
 
 // resolvido após responder as perguntas de setup
-const workingdirParentDirPathMask = _.t(config.workingdirParentDirPathMask, startVariables)
-const workingdirsDirAbsPath = pathJoinWithRoot(workingdirParentDirPathMask)
+const workingdirParentDirPath = _.t(config.workingdirParentDirPathMask, startVariables)
+const workingdirsDirAbsPath = pathJoinWithRoot(workingdirParentDirPath)
 const entryDirPath = pathToTrabFile
+
+const excludePattern = _.t(config.excludeMask, startVariables)
+const excludePatternAbsPath = pathJoinWithRoot(excludePattern)
 
 const lookupDirPath = _.t(config.lookupDirPathMask, startVariables)
 const lookupDirAbsPath = pathJoinWithRoot(lookupDirPath)
+
+delete config['excludeMask']
+// NOTE: excludePatternAbsPath
+config['excludePatternAbsPath'] = excludePatternAbsPath
 
 delete config['workingdirParentDirPathMask']
 // NOTE: workingdirsDirAbsPath
@@ -165,10 +180,6 @@ function getRootDirForWorkingdir(wdAbs) {
     ('..' + path.sep).repeat(config.levelsToRootDir))
 }
 
-function getHookFor(context) {
-  return config[context]
-}
-
 async function runHookOn(context, name) {
   if (!context || !context[name]) return
 
@@ -243,19 +254,18 @@ async function defineEntryDirName(currLookup, defaultEntryDirName) {
 // ██║  ██║╚██████╔╝██║ ╚████║
 // ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 
-async function runAt(workingdirAbsPath, idx) {
+async function runAt({ index, workingdirAbsPath, userCommandsHooks }) {
   if (isDev) { console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info(); }
 
   log() // break line
   const { reply: keepRunning } = await _.prompt(
-    `${sty.secondary(`[${idx}]`)} Continuar para: ${sty.warning(truncatePath(workingdirAbsPath))}`
+    `${sty.secondary(`[${index}]`)} Continuar para: ${sty.warning(truncatePath(workingdirAbsPath))}`
   ).confirm()
 
   if (!keepRunning) return
 
   let __workingdirAbsPath = workingdirAbsPath
   let entryDirName = path.basename(workingdirAbsPath)
-  const userCommandsHooks = getHookFor('commandsForEachRootDir')
 
   //#region [4.1]
   const rootDirAbsPath = getRootDirForWorkingdir(workingdirAbsPath)
@@ -319,7 +329,7 @@ async function runAt(workingdirAbsPath, idx) {
   }
 
   //#region [4.2]
-  await runHookOn(userCommandsHooks, 'onEnter')
+  await runHookOn(userCommandsHooks, 'onEnterWD')
   //#endregion
 
   //#region [4.3]
@@ -412,18 +422,26 @@ async function runAt(workingdirAbsPath, idx) {
   }
 
   config.stopServer()
-  await runHookOn(userCommandsHooks, 'onBeforeLeave')
+  await runHookOn(userCommandsHooks, 'beforeLeaveWD')
   //#endregion
 }
 
 ;(async function() {
+  const globOptions = {
+    absolute: true,
+    ignore: config.excludePatternAbsPath,
+  }
+
+  const userCommandsHooks = config.commandsHooks || {}
+  const userCommandsHooksAmount = AVAILABLE_HOOKS.reduce((total, hookName) =>
+    total += (userCommandsHooks[hookName] || []).length, 0)
 
   try {
 
-    const parentDirs = hshell.listDirectoriesFrom(config.workingdirsDirAbsPath)
+    const parentDirs = await _.globPattern(config.workingdirsDirAbsPath, globOptions)
 
     const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
-    const workingdirs = hshell.listDirectoriesFrom(resolvedWorkindirsPath) // may throw an error
+    const workingdirs = await _.globPattern(resolvedWorkindirsPath, globOptions)
 
     //#region [3]
     hshell.createDirIfNotExists(config.lookupDirAbsPath)
@@ -435,8 +453,9 @@ async function runAt(workingdirAbsPath, idx) {
     ]
 
     _.displayBox([
-      `Total: ${sty.bold(parentDirs.length)}`,
-      `Encontrados: ${sty.bold(workingdirs.length)}`,
+      `Total de diretórios pai : ${sty.bold(parentDirs.length)}`,
+      `Total que será analisado: ${sty.bold(workingdirs.length)}`,
+      `Total de hooks encontrados: ${sty.bold(userCommandsHooksAmount)}`,
     ])
 
     for (let i = 0; i < workingdirs.length; ++i) {
@@ -446,7 +465,11 @@ async function runAt(workingdirAbsPath, idx) {
         continue
       }
 
-      const code = await runAt(workingdirAbsPath, i + 1)
+      const code = await runAt({
+        index: i + 1,
+        workingdirAbsPath,
+        userCommandsHooks,
+      })
       if (code === 401) return
       if (code === 402) return
     }
