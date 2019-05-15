@@ -12,7 +12,6 @@ hshell.config.silent = true
 const AVAILABLE_HOOKS = [
   'onEnterWD',
   'beforeLeaveWD',
-  'beforeExit',
   'onFinish',
 ]
 
@@ -477,6 +476,8 @@ async function runAt({ index, workingdirAbsPath, userCommandsHooks }) {
       if (code === 401) return
       if (code === 402) return
     }
+
+    await runHookOn(userCommandsHooks, 'onFinish')
 
   } catch (err) {
     console.error(sty.error('[ERROR] ' + err.message))

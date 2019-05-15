@@ -108,9 +108,6 @@ module.exports = {
     // após parar o servidor -- antes de seguir para o próximo "workingdir"
     beforeLeaveWD: [],
 
-    // antes de fechar o duis-exec -- quando a tecla `Esc` é pressionada
-    beforeExit: [],
-
     // após ter percorrido todos os "workingdir" encontrados
     onFinish: [],
   },
