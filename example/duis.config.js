@@ -97,7 +97,7 @@ module.exports = {
   lookupAttachExtra: myLookupAttachExtra,
 
   // comandos a serem executados na linha de comandos em alguns estágios do duis-exec
-  commandsHooks: {
+  _commandsHooks: {
     // antes de abrir o navegador na pasta do aluno -- assim que entrar no "workingdir"
     onEnterWD: [
     'git checkout master',

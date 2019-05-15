@@ -192,9 +192,9 @@ async function runHookOn(context, name) {
     _.wrapSyncOutput(() => {
       log(sty`{secondary {bold %s} %s}`, '$', command)
       try {
-        // if `command` needs to read from stdin, this not work properly with `set -v` mode
+        // if `command` needs to read from stdin, this will not work properly with `set -v` mode
         const commandOutput = hshell.runSafe(command)
-        log(sty`{secondary %s}`, commandOutput)
+        log(sty`{white %s}`, commandOutput)
       } catch (err) {
         log(err)
       }
@@ -352,11 +352,15 @@ async function runAt({ index, workingdirAbsPath, userCommandsHooks }) {
 
     if (isSameVersion) {
       log(sty`{success {bold %s} %s {bold %s}}`, '\u{2714}', 'Versão já registrada para', entryDirName)
-      const { reply: keepRunning } = await _.prompt(sty.vdanger(
+      const { reply: choice } = await _.prompt(sty.vdanger(
         `Continuar mesmo assim`
-      )).confirm({ default: false })
+      )).list({ choices: ['pular', 'sim', 'tentar outro'] })
 
-      repeatPrompt = !keepRunning
+      if (choice === 'pular') {
+        return
+      }
+
+      repeatPrompt = (choice !== 'sim')
     }
   }
   //#endregion
