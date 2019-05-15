@@ -183,7 +183,7 @@ async function runHookOn(context, name) {
   if (!context || !context[name]) return
 
   for (const command of context[name]) {
-    if (config.safeMode) {
+    if (config.safe) {
       const { reply: canRunCommand } = await confirmCmdExecution(command)
       if (!canRunCommand) continue
     }
