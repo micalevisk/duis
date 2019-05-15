@@ -62,8 +62,9 @@ module.exports = {
 
   /*************************** OPCIONAIS ***************************/
 
-  // template do glob pattern usado para ignorar durante a busca dos "parent dir"
-  excludeMask: './{TURMA}/**/__*__', // exemplo: excluindo qualquer arquivo que inicie e termine com `__`
+  excludeMasks: [
+    './{TURMA}/**/__*__', // exemplo: excluindo qualquer arquivo que inicie e termine com `__`
+  ],
 
   // nome padrão para o identificador no lookup
   entryDirName: '', // se for um valor falsy, o padrão será inferido a partir dos argumentos do CLI
@@ -97,10 +98,10 @@ module.exports = {
   lookupAttachExtra: myLookupAttachExtra,
 
   // comandos a serem executados na linha de comandos em alguns estágios do duis-exec
-  _commandsHooks: {
+  hooks: {
     // antes de abrir o navegador na pasta do aluno -- assim que entrar no "workingdir"
     onEnterWD: [
-    'git checkout master',
+      'git checkout master',
       'git pull origin master',
       // 'git fetch origin master',
     ],

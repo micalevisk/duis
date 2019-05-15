@@ -48,7 +48,20 @@ const defaultStartQuestions = [
 
 //#region [1]
 const config = _.requireUpdated(configFileAbsPath)
-Object.assign(config, _.filter(priorityConfigs, v => v !== undefined))
+for (const [configName, configValue] of Object.entries(priorityConfigs)) {
+  if (typeof configValue !== 'undefined') {
+    let newConfigValue = configValue
+    const configNamePath = configName.split('.')
+    // FUTURE: check the schema defintion
+    const originalConfigValue = _.getDeep(config, configNamePath)
+    if ( Array.isArray(originalConfigValue) ) {
+      newConfigValue = (originalConfigValue || []).concat(configValue.split(','))
+    }
+
+    _.setDeep(config, configNamePath, newConfigValue)
+  }
+}
+// Object.assign(config, _.filter(priorityConfigs, v => v !== undefined))
 //#endregion
 
 //#region [2]
@@ -70,15 +83,8 @@ const workingdirParentDirPath = _.t(config.workingdirParentDirPathMask, startVar
 const workingdirsDirAbsPath = pathJoinWithRoot(workingdirParentDirPath)
 const entryDirPath = pathToTrabFile
 
-const excludePattern = _.t(config.excludeMask, startVariables)
-const excludePatternAbsPath = pathJoinWithRoot(excludePattern)
-
 const lookupDirPath = _.t(config.lookupDirPathMask, startVariables)
 const lookupDirAbsPath = pathJoinWithRoot(lookupDirPath)
-
-delete config['excludeMask']
-// NOTE: excludePatternAbsPath
-config['excludePatternAbsPath'] = excludePatternAbsPath
 
 delete config['workingdirParentDirPathMask']
 // NOTE: workingdirsDirAbsPath
@@ -87,6 +93,19 @@ config['workingdirsDirAbsPath'] = workingdirsDirAbsPath
 // NOTE: lookupDirAbsPath
 delete config['lookupDirPathMask']
 config['lookupDirAbsPath'] = lookupDirAbsPath
+
+
+if (config.excludeMasks) {
+  const excludePatternsAbsPath = config.excludeMasks.map((excludeMask) => {
+    const excludePattern = _.t(excludeMask, startVariables)
+    const excludePatternAbsPath = pathJoinWithRoot(excludePattern)
+    return excludePatternAbsPath
+  })
+
+  delete config['excludeMasks']
+  // NOTE: excludePatternsAbsPath
+  config['excludePatternsAbsPath'] = excludePatternsAbsPath
+}
 
 if (config.test && config.test.commandToRun) {
   const testsDirPath = _.t(config.test.dirPathMask, startVariables)
@@ -432,10 +451,10 @@ async function runAt({ index, workingdirAbsPath, userCommandsHooks }) {
 ;(async function() {
   const globOptions = {
     absolute: true,
-    ignore: config.excludePatternAbsPath,
+    ignore: config.excludePatternsAbsPath,
   }
 
-  const userCommandsHooks = config.commandsHooks || {}
+  const userCommandsHooks = config.hooks || {}
   const userCommandsHooksAmount = AVAILABLE_HOOKS.reduce((total, hookName) =>
     total += (userCommandsHooks[hookName] || []).length, 0)
 

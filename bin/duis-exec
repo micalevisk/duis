@@ -8,6 +8,10 @@ program
   .description('Executar o Duis usando o arquivo de configuração informado.')
   .arguments('[PATH/TO/CONFIG_FILE] [PATH/TO/TRAB_FILE]')
   .option('--entryDirName <entry-id>', 'set the lookup identifier')
+
+  .option('--excludeMasks <glob-patterns>', '(comma-separated)')
+  .option('--hooks.onFinish <commands-to-run>', '(comma-separated)')
+
   .parse(process.argv);
 
 // assuming: $ duis <PATH/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
