@@ -220,7 +220,8 @@ async function runHookOn(context, name) {
         const commandOutput = hshell.runSafe(command)
         log(sty`{white %s}`, commandOutput)
       } catch (err) {
-        log(err)
+        log(sty.error(err.message))
+        if (isDev) console.error(err)
       }
     })
   }
@@ -483,6 +484,10 @@ async function runAt(index, workingdirAbsPath) {
     config.testsDirAbsPath,
   ]
 
+  const initialCWD = process.cwd()
+
+  await runHookOn(userCommandsHooks, 'beforeStart')
+
   try {
 
     const parentDirs = await _.globPattern(config.workingdirsDirAbsPath, globOptions)
@@ -501,13 +506,11 @@ async function runAt(index, workingdirAbsPath) {
 
     //#region
     _.displayBox([
+      `Hooks definidos: ${sty.bold(userCommandsHooksAmount)}`,
       `Total de diretórios pai : ${sty.bold(parentDirs.length)}`,
       `Total que será analisado: ${sty.bold(workingdirsFiltered.length)}`,
-      `Hooks definidos: ${sty.bold(userCommandsHooksAmount)}`,
     ])
     //#endregion
-
-    const initialCWD = process.cwd()
 
     for (let idx = 0; idx < workingdirsFiltered.length; ++idx) {
       hshell.enterOnDir(initialCWD)
