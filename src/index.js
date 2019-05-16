@@ -170,11 +170,11 @@ if (config.browser && config.browser.name) {
 config['stopServer'] = () => {}
 if (config.serverPort) {
   const phpServer = new PHPServer({host: 'localhost', port: config.serverPort})
+  _.addToOnCleanup(phpServer.shutDown.bind(phpServer))
 
   // NOTE: initServer
   config['initServer'] = function initServer(docroot, onProcessClose = () => {}) {
     phpServer.initServer(docroot).on('close', onProcessClose)
-    _.addToOnCleanup(phpServer.shutDown.bind(phpServer))
     return phpServer
   }
 
