@@ -184,6 +184,8 @@ if (config.serverPort) {
   }
 }
 
+const userCommandsHooks = config.hooks || {}
+
 
 // ██╗   ██╗████████╗██╗██╗     ███████╗
 // ██║   ██║╚══██╔══╝██║██║     ██╔════╝
@@ -223,9 +225,13 @@ async function runHookOn(context, name) {
 
 function truncatePath(pathToFile) {
   const homeAbsPath = process.env.HOME
+  const currentWorkingDirectory = process.cwd()
 
-  if (pathToFile.startsWith(homeAbsPath)) {
-    return sty.secondary('~') + pathToFile.substr(homeAbsPath.length)
+  if (pathToFile.startsWith(currentWorkingDirectory)) {
+    if ((pathToFile === currentWorkingDirectory) && (pathToFile.startsWith(homeAbsPath))) {
+      return sty.secondary('~') + pathToFile.substr(homeAbsPath.length)
+    }
+    return sty.secondary('.') + pathToFile.substr(currentWorkingDirectory.length)
   }
 
   return _.stripDirs(pathToFile, config.levelsToRootDir * -3)
@@ -272,7 +278,12 @@ async function defineEntryDirName(currLookup, defaultEntryDirName) {
 // ██║  ██║╚██████╔╝██║ ╚████║
 // ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 
-async function runAt({ index, workingdirAbsPath, userCommandsHooks }) {
+/**
+ *
+ * @param {number} index
+ * @param {string} workingdirAbsPath
+ */
+async function runAt(index, workingdirAbsPath) {
   if (isDev) { console.info();console.info('<---------------------');console.info(workingdirAbsPath);console.info(); }
 
   log() // break line
@@ -453,10 +464,17 @@ async function runAt({ index, workingdirAbsPath, userCommandsHooks }) {
     absolute: true,
     ignore: config.excludePatternsAbsPath,
   }
+  const userCommandsHooksAmount = AVAILABLE_HOOKS.reduce((total, hookName) => {
+    if (userCommandsHooks[hookName].length) {
+      total += `${sty.emph(hookName)} (${userCommandsHooks[hookName].length}) `
+    }
+    return total
+  }, '')
 
-  const userCommandsHooks = config.hooks || {}
-  const userCommandsHooksAmount = AVAILABLE_HOOKS.reduce((total, hookName) =>
-    total += (userCommandsHooks[hookName] || []).length, 0)
+  // directories to ignore when looking for "workingdir"
+  const blackListDirectories = [
+    config.testsDirAbsPath,
+  ]
 
   try {
 
@@ -469,15 +487,10 @@ async function runAt({ index, workingdirAbsPath, userCommandsHooks }) {
     hshell.createDirIfNotExists(config.lookupDirAbsPath)
     //#endregion
 
-    // directories to ignore when looking for "workingdir"
-    const blackListDirectories = [
-      config.testsDirAbsPath,
-    ]
-
     _.displayBox([
       `Total de diretórios pai : ${sty.bold(parentDirs.length)}`,
       `Total que será analisado: ${sty.bold(workingdirs.length)}`,
-      `Total de hooks encontrados: ${sty.bold(userCommandsHooksAmount)}`,
+      `Hooks definidos: ${sty.bold(userCommandsHooksAmount)}`,
     ])
 
     for (let i = 0; i < workingdirs.length; ++i) {
@@ -487,11 +500,7 @@ async function runAt({ index, workingdirAbsPath, userCommandsHooks }) {
         continue
       }
 
-      const code = await runAt({
-        index: i + 1,
-        workingdirAbsPath,
-        userCommandsHooks,
-      })
+      const code = await runAt(i + 1, workingdirAbsPath)
       if (code === 401) return
       if (code === 402) return
     }
