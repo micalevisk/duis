@@ -513,8 +513,6 @@ async function runAt(index, workingdirAbsPath) {
     //#endregion
 
     for (let idx = 0; idx < workingdirsFiltered.length; ++idx) {
-      hshell.enterOnDir(initialCWD)
-
       const workingdirAbsPath = workingdirsFiltered[idx]
 
       if (blackListDirectories.includes(workingdirAbsPath)) {
@@ -532,6 +530,8 @@ async function runAt(index, workingdirAbsPath) {
         lastWorkingdirsParents,
       })
       //#endregion
+
+      hshell.enterOnDir(initialCWD)
     }
 
     //#region
