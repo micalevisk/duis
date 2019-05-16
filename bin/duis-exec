@@ -7,9 +7,11 @@ const { exec } = require('../commands');
 program
   .description('Executar o Duis usando o arquivo de configuração informado.')
   .arguments('[PATH/TO/CONFIG_FILE] [PATH/TO/TRAB_FILE]')
-  .option('--entryDirName <entry-id>', 'set the lookup identifier')
+  .option('--new', 'define a new session')
 
+  .option('--entryDirName <entry-id>', 'set the lookup identifier')
   .option('--excludeMasks <glob-patterns>', '(comma-separated)')
+  .option('--levelsToRootDir <N>', '')
   .option('--hooks.onFinish <commands-to-run>', '(comma-separated)')
 
   .parse(process.argv);

@@ -58,7 +58,7 @@ module.exports = {
   lookupDirPathMask: './{TURMA}/.duis.lookup/', // arquivos que iniciam com `.` são ignorados na busca dos "parent dir"
 
   // a partir do diretório "workingdir", é preciso voltar quantos níveis para ir ao que tem o `.git` (do aluno)?
-  levelsToRootDir: 1, // 0 se não for existir um diretório de trabalho específico, i.e., usado em `duis .`
+  levelsToRootDir: 0, // 0 se não for existir um diretório de trabalho específico, i.e., usado em `duis .`
 
   /*************************** OPCIONAIS ***************************/
 

@@ -1,20 +1,12 @@
 const path = require('path')
 const hshell = require('./human-shell')
-const { utils: _, sty, openBrowser, PHPServer } = require('../lib')
+const { utils: _, sty, openBrowser, PHPServer, constants } = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
 const log = console.log
 
 if (isDev) hshell.set('-v')
 hshell.config.silent = true
-
-
-const AVAILABLE_HOOKS = [
-  'onEnterWD',
-  'beforeLeaveWD',
-  'onFinish',
-]
-
 
 /**
  * @param {string} configFileAbsPath
@@ -61,7 +53,20 @@ for (const [configName, configValue] of Object.entries(priorityConfigs)) {
     _.setDeep(config, configNamePath, newConfigValue)
   }
 }
-// Object.assign(config, _.filter(priorityConfigs, v => v !== undefined))
+
+const sessionAbsPath = pathJoinWithRoot(constants.DUIS_SESSION_FILENAME)
+const sessionTemplate = {
+  lastWorkingdirsParents: []
+}
+if (config.new) { // create a new session file, overwriting the last one
+  _.writeJSON(sessionAbsPath, sessionTemplate)
+}
+
+const currentSession = (hshell.isReadableFile(sessionAbsPath) && _.loadJSON(sessionAbsPath)) || sessionTemplate
+const updateSessionFile = dataToMerge => _.writeJSON(sessionAbsPath, {
+  ...sessionTemplate,
+  ...dataToMerge,
+})
 //#endregion
 
 //#region [2]
@@ -194,10 +199,9 @@ const userCommandsHooks = config.hooks || {}
 // ╚██████╔╝   ██║   ██║███████╗███████║
 //  ╚═════╝    ╚═╝   ╚═╝╚══════╝╚══════╝
 
-function getRootDirForWorkingdir(wdAbs) {
-  return path.join(
-    wdAbs,
-    ('..' + path.sep).repeat(config.levelsToRootDir))
+function getRootDirForWorkingdir(wdAbsPath) {
+  return path.normalize( path.join(wdAbsPath,
+    ('..' + path.sep).repeat(config.levelsToRootDir)))
 }
 
 async function runHookOn(context, name) {
@@ -293,13 +297,13 @@ async function runAt(index, workingdirAbsPath) {
 
   if (!keepRunning) return
 
-  let __workingdirAbsPath = workingdirAbsPath
-  let entryDirName = path.basename(workingdirAbsPath)
-
   //#region [4.1]
   const rootDirAbsPath = getRootDirForWorkingdir(workingdirAbsPath)
   hshell.enterOnDir(rootDirAbsPath)
   //#endregion
+
+  let __workingdirAbsPath = workingdirAbsPath
+  let entryDirName = path.basename(workingdirAbsPath)
 
   //#region [4.2]
   const rootLastCommitId = getLastCommit({until: config.startAnswers.commitLimitDate})
@@ -464,12 +468,15 @@ async function runAt(index, workingdirAbsPath) {
     absolute: true,
     ignore: config.excludePatternsAbsPath,
   }
-  const userCommandsHooksAmount = AVAILABLE_HOOKS.reduce((total, hookName) => {
+
+  const userCommandsHooksAmount = constants.AVAILABLE_HOOKS.reduce((total, hookName) => {
     if (userCommandsHooks[hookName].length) {
       total += `${sty.emph(hookName)} (${userCommandsHooks[hookName].length}) `
     }
     return total
   }, '')
+
+  const { lastWorkingdirsParents } = currentSession
 
   // directories to ignore when looking for "workingdir"
   const blackListDirectories = [
@@ -482,30 +489,53 @@ async function runAt(index, workingdirAbsPath) {
 
     const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
     const workingdirs = await _.globPattern(resolvedWorkindirsPath, globOptions)
+    const workingdirsFiltered = workingdirs.filter((workingdirAbsPath) => {
+      const workingdirParent = getRootDirForWorkingdir(workingdirAbsPath)
+      return !lastWorkingdirsParents
+        .some(lastFoundWorkingdir => _.hasSamePath(workingdirParent, lastFoundWorkingdir))
+    })
 
     //#region [3]
     hshell.createDirIfNotExists(config.lookupDirAbsPath)
     //#endregion
 
+    //#region
     _.displayBox([
       `Total de diretórios pai : ${sty.bold(parentDirs.length)}`,
-      `Total que será analisado: ${sty.bold(workingdirs.length)}`,
+      `Total que será analisado: ${sty.bold(workingdirsFiltered.length)}`,
       `Hooks definidos: ${sty.bold(userCommandsHooksAmount)}`,
     ])
+    //#endregion
 
-    for (let i = 0; i < workingdirs.length; ++i) {
-      const workingdirAbsPath = workingdirs[i]
+    const initialCWD = process.cwd()
+
+    for (let idx = 0; idx < workingdirsFiltered.length; ++idx) {
+      hshell.enterOnDir(initialCWD)
+
+      const workingdirAbsPath = workingdirsFiltered[idx]
 
       if (blackListDirectories.includes(workingdirAbsPath)) {
         continue
       }
 
-      const code = await runAt(i + 1, workingdirAbsPath)
+      const code = await runAt(idx + 1, workingdirAbsPath)
       if (code === 401) return
       if (code === 402) return
+
+      //#region
+      lastWorkingdirsParents.push( getRootDirForWorkingdir(workingdirAbsPath) )
+
+      updateSessionFile({
+        lastWorkingdirsParents,
+      })
+      //#endregion
     }
 
-    await runHookOn(userCommandsHooks, 'onFinish')
+    //#region
+    if (workingdirsFiltered.length) {
+      await runHookOn(userCommandsHooks, 'onFinish')
+    }
+    //#endregion
 
   } catch (err) {
     console.error(sty.error('[ERROR] ' + err.message))

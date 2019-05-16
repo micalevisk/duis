@@ -58,6 +58,10 @@ $ duis [PATH/TO/CONFIG-FILE] <PATH/TO/TRAB-FILE>
 </details>
 <br>
 
+<details>
+  <summary>Exemplificando o processo de execução</summary>
+
+<!-- TODO: atualizar algoritmo abaixo -->
 Iniciar processo com **`$ duis . TRAB1`**
 1. Carregar as configurações expostas no arquivo `duis.config.js` do diretório corrente (se não existir: _exit 1_)
 2. Fazer as perguntas definidas em `CONFIG#startQuestions`, para adicionar mais valores ao estado inicial
@@ -81,6 +85,8 @@ Iniciar processo com **`$ duis . TRAB1`**
         1. Atualizar o arquivo de lookup correspondente
         2. Parar o servidor (se iniciado)
         3. Executar os comandos definidos em `CONFIG#commandsForEachRootDir.onBeforeLeave` (perguntando antes de executar cada, se `CONFIG#safeMode` for `true`)
+
+</details>
 
 ## Tips
 - <kbd>Esc</kbd> para fechar o programa (como o <kbd>ctrl+c</kbd>)
