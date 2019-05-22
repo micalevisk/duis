@@ -29,7 +29,7 @@ const workingdirQuestions = [
     type: 'input',
     name: 'note:faltou',
     message: 'O que faltou? (separar por `;`)',
-    when: answsers => answsers['cell:nota'] === 'quase',
+    when: answers => answers['cell:nota'] === 'quase',
     filter: answser => answser.split(';').map(a => a.trim()),
   }
 ]

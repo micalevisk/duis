@@ -21,16 +21,6 @@ if ( !hshell.isReadableFile(configFileAbsPath) ) {
 
 const pathJoinWithRoot = path.resolve.bind(null, configFileAbsPath, '..')
 
-const defaultStartQuestions = [
-  {
-    type: 'input',
-    name: 'commitLimitDate',
-    default: new Date().toISOString().substr(0, 10),
-    message: `Data máxima dos commits ${sty.secondary('[AAAA-DD-MM]')}`,
-    validate: input => !input.trim() ? 'Formato inválido!' : (/^\d{4}-\d{2}-\d{2}$/).test(input)
-  },
-]
-
 // ███████╗███████╗████████╗██╗   ██╗██████╗
 // ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
 // ███████╗█████╗     ██║   ██║   ██║██████╔╝
@@ -53,27 +43,82 @@ for (const [configName, configValue] of Object.entries(priorityConfigs)) {
     _.setDeep(config, configNamePath, newConfigValue)
   }
 }
+//#endregion
 
+//#region [lift session]
 const sessionAbsPath = pathJoinWithRoot(constants.DUIS_SESSION_FILENAME)
+
 const sessionTemplate = {
-  lastWorkingdirsParents: []
+  'lastAnswersToStartQuestions': {},
+  'lastWorkingdirsParents': [],
 }
+
 if (config.new) { // create a new session file, overwriting the last one
   _.writeJSON(sessionAbsPath, sessionTemplate)
 }
 
-const currentSession = (hshell.isReadableFile(sessionAbsPath) && _.loadJSON(sessionAbsPath)) || sessionTemplate
-const updateSessionFile = dataToMerge => _.writeJSON(sessionAbsPath, {
-  ...sessionTemplate,
-  ...dataToMerge,
-})
+const currentSession = (function loadSession() {
+  const session = Object.assign({}, sessionTemplate)
+
+  if (!hshell.isReadableFile(sessionAbsPath)) {
+    return session
+  }
+
+  const storedSession = _.loadJSON(sessionAbsPath)
+  if (storedSession) {
+
+    return Object.assign(session, storedSession)
+  }
+
+  return session
+}())
+
+const updateSessionFile = dataToMerge =>
+  _.writeJSON(sessionAbsPath, Object.assign(currentSession, dataToMerge))
+
+const getFromSession = (pathToLookup, fallbackValue) => {
+  if (!Array.isArray(pathToLookup)) {
+    pathToLookup = [pathToLookup]
+  }
+
+  const valueStored = _.getDeep(currentSession, pathToLookup)
+  return (typeof valueStored !== 'undefined') ? valueStored : fallbackValue
+}
 //#endregion
 
 //#region [2]
+const defaultStartQuestions = [
+  {
+    type: 'input',
+    name: 'commitLimitDate',
+    // default: getFromSession(['lastAnswersToStartQuestions', 'commitLimitDate'], new Date().toISOString().substr(0, 10)),
+    default: new Date().toISOString().substr(0, 10),
+    message: `Data máxima dos commits ${sty.secondary('[AAAA-MM-DD]')}`,
+    validate: input => !input.trim() ? 'Formato inválido!' : (/^\d{4}-\d{2}-\d{2}$/).test(input)
+  },
+]
+
+const overrideDefaultValue = (question) => {
+  if (!question.default) {
+    return question
+  }
+
+  const lastValue = getFromSession(['lastAnswersToStartQuestions', question.name], question.default)
+  question.default = lastValue
+
+  return question
+}
+
 const startAnswers = await _.rawPrompt([
   ...defaultStartQuestions,
   ...config.startQuestions,
-])
+].map(overrideDefaultValue))
+
+updateSessionFile({
+  'lastAnswersToStartQuestions': {
+    ...startAnswers,
+  },
+})
 
 const namesStartVariables = Object.keys(startAnswers).filter(_.isUpper)
 // respostas com as keys (name) com letras maiúsculas
@@ -470,8 +515,8 @@ async function runAt(index, workingdirAbsPath) {
     ignore: config.excludePatternsAbsPath,
   }
 
-  const userCommandsHooksAmount = constants.AVAILABLE_HOOKS.reduce((total, hookName) => {
-    if (userCommandsHooks[hookName].length) {
+  const userHooksDefined = constants.AVAILABLE_HOOKS.reduce((total, hookName) => {
+    if ((hookName in userCommandsHooks) && (userCommandsHooks[hookName].length)) {
       total += `${sty.emph(hookName)} (${userCommandsHooks[hookName].length}) `
     }
     return total
@@ -486,7 +531,13 @@ async function runAt(index, workingdirAbsPath) {
 
   const initialCWD = process.cwd()
 
-  await runHookOn(userCommandsHooks, 'beforeStart')
+  if (userHooksDefined) {
+    _.displayBox([
+      `Hooks definidos: ${sty.bold(userHooksDefined)}`,
+    ], { borderColor: 'blue' })
+
+    await runHookOn(userCommandsHooks, 'beforeStart')
+  }
 
   try {
 
@@ -506,7 +557,6 @@ async function runAt(index, workingdirAbsPath) {
 
     //#region
     _.displayBox([
-      `Hooks definidos: ${sty.bold(userCommandsHooksAmount)}`,
       `Total de diretórios pai : ${sty.bold(parentDirs.length)}`,
       `Total que será analisado: ${sty.bold(workingdirsFiltered.length)}`,
     ])
