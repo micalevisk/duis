@@ -1,14 +1,9 @@
-const path = require('path')
+// Ensure we're in the project directory, so relative paths work as expected
+process.chdir(__dirname)
+
 const fs = require('fs')
 
-const MD_TABLE = fs.readFileSync(
-  path.join(__dirname, 'metodologia.md')
-  //       \________/
-  //           |
-  //           +---> necessário pois este script será usado em outro CWD, então não basta `./metodologia.txt`
-).toString()
-
-
+const MD_TABLE = fs.readFileSync('metodologia.md').toString()
 const planilhaJSON = markdownTableToJSON(MD_TABLE)
 
 const formatFor = (src, fnCasting = String) => (target, prop, idx) =>
