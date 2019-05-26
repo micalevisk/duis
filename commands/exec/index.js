@@ -1,7 +1,9 @@
 const path = require('path')
 const duis = require('../../src')
 
-const { DUIS_CONFIG_FILENAME } = require('../../lib').constants
+const { sty, constants } = require('../../lib')
+const { DUIS_CONFIG_FILENAME } = constants
+const isDev = process.env.NODE_ENV === 'development'
 
 /**
  *
@@ -13,7 +15,12 @@ module.exports = async function exec(pathToConfigFile, pathToTrabFile, priorityC
   const configFileAbsPath = path.resolve(pathToConfigFile, DUIS_CONFIG_FILENAME)
 
   setupProcessListeners()
-  return await duis(configFileAbsPath, pathToTrabFile, priorityConfigs)
+  return duis(configFileAbsPath, pathToTrabFile, priorityConfigs)
+    .catch((err) => {
+      console.error(sty.error('[ERROR] ' + err.message))
+      if (isDev) console.error(err)
+      process.exit(9)
+    })
 }
 
 function setupProcessListeners() {

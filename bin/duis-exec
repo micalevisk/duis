@@ -9,6 +9,7 @@ program
   .arguments('[PATH/TO/CONFIG_FILE] [PATH/TO/TRAB_FILE]')
   .option('--new', 'using a new session')
 
+  .option('--caseInsensitive', '')
   .option('--workingdirParentDirPathMask <MASK/PATH/TO/PARENT>', '')
   .option('--safe', '')
   .option('--entryDirName <entry-id>', 'set the lookup identifier')
@@ -26,4 +27,5 @@ if (program.args.length === 1) {
   pathToConfigFile = '.';
 }
 
-exec(pathToConfigFile, pathToTrabFile, program.opts());
+exec(pathToConfigFile, pathToTrabFile, program.opts())
+  .then(code => process.exit(code));

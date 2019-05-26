@@ -1,4 +1,5 @@
 const path = require('path')
+const { trueCasePathSync } = require('true-case-path')
 const hshell = require('./human-shell')
 const { utils: _, sty, openBrowser, PHPServer, constants } = require('../lib')
 
@@ -15,8 +16,7 @@ hshell.config.silent = true
 module.exports = async function duisAbove(configFileAbsPath, pathToTrabFile, priorityConfigs) {
 
 if ( !hshell.isReadableFile(configFileAbsPath) ) {
-  log(sty`{error %s {bold %s}}`, 'File not found:', configFileAbsPath)
-  return 401
+  throw new Error('File not found: ' + configFileAbsPath)
 }
 
 const pathJoinWithRoot = path.resolve.bind(null, configFileAbsPath, '..')
@@ -252,7 +252,9 @@ function getRootDirForWorkingdir(wdAbsPath) {
 async function runHookOn(context, name) {
   if (!context || !context[name]) return
 
-  for (const command of context[name]) {
+  for (const commandMask of context[name]) {
+    const command = _.t(commandMask, startVariables)
+
     if (config.safe) {
       const { reply: canRunCommand } = await confirmCmdExecution(command)
       if (!canRunCommand) continue
@@ -262,8 +264,11 @@ async function runHookOn(context, name) {
       log(sty`{secondary {bold %s} %s}`, '$', command)
       try {
         // if `command` needs to read from stdin, this will not work properly with `set -v` mode
-        const commandOutput = hshell.runSafe(command)
-        log(sty`{white %s}`, commandOutput)
+        // TODO: tentar usando o `execa`
+        hshell.exec(command, { silent: false })
+        // XXX: não deixa o output bonito
+        // const commandOutput = hshell.runSafe(command)
+        // log(sty`{white %s}`, commandOutput)
       } catch (err) {
         log(sty.error(err.message))
         if (isDev) console.error(err)
@@ -321,13 +326,6 @@ async function defineEntryDirName(currLookup, defaultEntryDirName) {
 }
 
 
-// ██████╗ ██╗   ██╗███╗   ██╗
-// ██╔══██╗██║   ██║████╗  ██║
-// ██████╔╝██║   ██║██╔██╗ ██║
-// ██╔══██╗██║   ██║██║╚██╗██║
-// ██║  ██║╚██████╔╝██║ ╚████║
-// ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-
 /**
  *
  * @param {number} index
@@ -359,6 +357,7 @@ async function runAt(index, workingdirAbsPath) {
   let rootDirName = path.basename(rootDirAbsPath)
 
   let rootLookupFileAbsPath = path.join(config.lookupDirAbsPath, rootDirName + '.json')
+  // rootLookupFileAbsPath = config.caseInsensitive ? trueCasePathSync(rootLookupFileAbsPath) : rootLookupFileAbsPath
   if ( !hshell.isReadableFile(rootLookupFileAbsPath) ) {
     log(sty`{error %s {bold %s}}`, 'File not found:', rootLookupFileAbsPath)
 
@@ -375,7 +374,7 @@ async function runAt(index, workingdirAbsPath) {
           default: rootLookupFileAbsPath,
           rootPath: config.lookupDirAbsPath,
           suggestOnly: false,
-        });
+        })
 
       rootLookupFileAbsPath = reply
     } else {
@@ -399,6 +398,7 @@ async function runAt(index, workingdirAbsPath) {
     hshell.createFileIfNotExists(rootLookupFileAbsPath)
     rootDirName = path.basename(rootLookupFileAbsPath, '.json')
   }
+  //#endregion
 
   const currLookup = _.loadJSON(rootLookupFileAbsPath)
 
@@ -509,93 +509,92 @@ async function runAt(index, workingdirAbsPath) {
   //#endregion
 }
 
-;(async function() {
-  const globOptions = {
-    absolute: true,
-    ignore: config.excludePatternsAbsPath,
+
+// ██████╗ ██╗   ██╗███╗   ██╗
+// ██╔══██╗██║   ██║████╗  ██║
+// ██████╔╝██║   ██║██╔██╗ ██║
+// ██╔══██╗██║   ██║██║╚██╗██║
+// ██║  ██║╚██████╔╝██║ ╚████║
+// ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+
+const globOptions = {
+  absolute: true,
+  nocase: config.caseInsensitive || false,
+  ignore: config.excludePatternsAbsPath,
+}
+
+const userHooksDefined = constants.AVAILABLE_HOOKS.reduce((total, hookName) => {
+  if ((hookName in userCommandsHooks) && (userCommandsHooks[hookName].length)) {
+    total += `${sty.emph(hookName)} (${userCommandsHooks[hookName].length}) `
+  }
+  return total
+}, '')
+
+const { lastWorkingdirsParents } = currentSession
+
+// directories to ignore when looking for "workingdir"
+const blackListDirectories = [
+  config.testsDirAbsPath,
+]
+
+const initialCWD = process.cwd()
+
+if (userHooksDefined) {
+  _.displayBox([
+    `Hooks definidos: ${sty.bold(userHooksDefined)}`,
+  ], { borderColor: 'blue' })
+
+  await runHookOn(userCommandsHooks, 'beforeStart')
+}
+
+const parentDirs = _.globPattern(config.workingdirsDirAbsPath, globOptions)
+
+const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
+const workingdirs = _.globPattern(resolvedWorkindirsPath, globOptions)
+const workingdirsFiltered = workingdirs.filter((workingdirAbsPath) => {
+  const workingdirParent = getRootDirForWorkingdir(workingdirAbsPath)
+  return !lastWorkingdirsParents
+    .some(lastFoundWorkingdir => _.hasSamePath(workingdirParent, lastFoundWorkingdir))
+})
+
+//#region [3]
+// FIXME: se for ignore sensitive, será preciso identificar o real `lookupDirAbsPath`
+hshell.createDirIfNotExists(config.lookupDirAbsPath)
+//#endregion
+
+//#region
+_.displayBox([
+  `Total de diretórios pai : ${sty.bold(parentDirs.length)}`,
+  `Total que será analisado: ${sty.bold(workingdirsFiltered.length)}`,
+])
+//#endregion
+
+for (let idx = 0; idx < workingdirsFiltered.length; ++idx) {
+  const workingdirAbsPath = workingdirsFiltered[idx]
+
+  if (blackListDirectories.includes(workingdirAbsPath)) {
+    continue
   }
 
-  const userHooksDefined = constants.AVAILABLE_HOOKS.reduce((total, hookName) => {
-    if ((hookName in userCommandsHooks) && (userCommandsHooks[hookName].length)) {
-      total += `${sty.emph(hookName)} (${userCommandsHooks[hookName].length}) `
-    }
-    return total
-  }, '')
+  const code = await runAt(idx + 1, workingdirAbsPath)
+  if (code === 401) return code
+  if (code === 402) return code
 
-  const { lastWorkingdirsParents } = currentSession
+  //#region
+  lastWorkingdirsParents.push( getRootDirForWorkingdir(workingdirAbsPath) )
 
-  // directories to ignore when looking for "workingdir"
-  const blackListDirectories = [
-    config.testsDirAbsPath,
-  ]
+  updateSessionFile({
+    lastWorkingdirsParents,
+  })
+  //#endregion
 
-  const initialCWD = process.cwd()
+  hshell.enterOnDir(initialCWD)
+}
 
-  if (userHooksDefined) {
-    _.displayBox([
-      `Hooks definidos: ${sty.bold(userHooksDefined)}`,
-    ], { borderColor: 'blue' })
-
-    await runHookOn(userCommandsHooks, 'beforeStart')
-  }
-
-  try {
-
-    const parentDirs = await _.globPattern(config.workingdirsDirAbsPath, globOptions)
-
-    const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
-    const workingdirs = await _.globPattern(resolvedWorkindirsPath, globOptions)
-    const workingdirsFiltered = workingdirs.filter((workingdirAbsPath) => {
-      const workingdirParent = getRootDirForWorkingdir(workingdirAbsPath)
-      return !lastWorkingdirsParents
-        .some(lastFoundWorkingdir => _.hasSamePath(workingdirParent, lastFoundWorkingdir))
-    })
-
-    //#region [3]
-    hshell.createDirIfNotExists(config.lookupDirAbsPath)
-    //#endregion
-
-    //#region
-    _.displayBox([
-      `Total de diretórios pai : ${sty.bold(parentDirs.length)}`,
-      `Total que será analisado: ${sty.bold(workingdirsFiltered.length)}`,
-    ])
-    //#endregion
-
-    for (let idx = 0; idx < workingdirsFiltered.length; ++idx) {
-      const workingdirAbsPath = workingdirsFiltered[idx]
-
-      if (blackListDirectories.includes(workingdirAbsPath)) {
-        continue
-      }
-
-      const code = await runAt(idx + 1, workingdirAbsPath)
-      if (code === 401) return
-      if (code === 402) return
-
-      //#region
-      lastWorkingdirsParents.push( getRootDirForWorkingdir(workingdirAbsPath) )
-
-      updateSessionFile({
-        lastWorkingdirsParents,
-      })
-      //#endregion
-
-      hshell.enterOnDir(initialCWD)
-    }
-
-    //#region
-    if (workingdirsFiltered.length) {
-      await runHookOn(userCommandsHooks, 'onFinish')
-    }
-    //#endregion
-
-  } catch (err) {
-    console.error(sty.error('[ERROR] ' + err.message))
-    if (isDev) console.error(err)
-    process.exit(1)
-  }
-
-}());
+//#region
+if (workingdirsFiltered.length) {
+  await runHookOn(userCommandsHooks, 'onFinish')
+}
+//#endregion
 
 }

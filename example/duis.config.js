@@ -51,6 +51,9 @@ const myStartQuestions = [
 
 module.exports = {
 
+  // `true` se deseja realizar as operações em arquivos ignorando as diferenças entre caracteres maiúsculos e minúsculos
+  caseInsensitive: false,
+
   // template do diretório parent ao que será passado como arg do Duis
   workingdirParentDirPathMask: './{TURMA}/{NICK_ALUNO}/',
 
@@ -79,7 +82,7 @@ module.exports = {
   // porta em que o servidor PHP tentará escutar
   serverPort: 8080,
 
-  _test: {
+  test: {
     // como devem terminar os arquivos de testes, i.e, a extensão deles
     fileExtName: '.test.js',
     // template do diretório em que estarão descritos os testes para cada "trabalho" (workingdir)
