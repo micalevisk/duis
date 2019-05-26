@@ -10,5 +10,17 @@
         "a": "exato"
       }
     ]
+  },
+  "HTML2": {
+    "_id": "fafc12c",
+    "extra": {
+      "nota": 10
+    },
+    "prompts": [
+      {
+        "q": "cell:nota",
+        "a": "exato"
+      }
+    ]
   }
 }

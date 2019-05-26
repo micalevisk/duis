@@ -2,6 +2,18 @@
   "HTML": {
     "_id": "bf01835",
     "extra": {
+      "nota": 11
+    },
+    "prompts": [
+      {
+        "q": "cell:nota",
+        "a": "exato+extra"
+      }
+    ]
+  },
+  "PHP1": {
+    "_id": "12d896c",
+    "extra": {
       "nota": 10
     },
     "prompts": [
@@ -11,22 +23,15 @@
       }
     ]
   },
-  "PHP1": {
+  "PHP2": {
     "_id": "12d896c",
     "extra": {
-      "nota": 9.9
+      "nota": 10
     },
     "prompts": [
       {
         "q": "cell:nota",
-        "a": "quase"
-      },
-      {
-        "q": "note:faltou",
-        "a": [
-          "a",
-          "as"
-        ]
+        "a": "exato"
       }
     ]
   }

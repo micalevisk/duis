@@ -1,4 +1,5 @@
 const fs = require('fs')
+const cp = require('child_process')
 const sh = require('shelljs')
 
 // sh.config.silent = true
@@ -12,6 +13,15 @@ function throwingError(method, ...args) {
 }
 
 const humanShell = {
+
+  /** @param {string} command */
+  /** @param {string[]} args */
+  /** @param {object} options */
+  spawn(command, args, options) {
+    return cp.spawnSync(command,
+      args,
+      { ...options, stdio: 'inherit' })
+  },
 
   /** @param {string} programName */
   hasProgram(programName) {

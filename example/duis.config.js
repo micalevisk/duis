@@ -52,7 +52,7 @@ const myStartQuestions = [
 module.exports = {
 
   // `true` se deseja realizar as operações em arquivos ignorando as diferenças entre caracteres maiúsculos e minúsculos
-  caseInsensitive: false,
+  // caseInsensitive: false,
 
   // template do diretório parent ao que será passado como arg do Duis
   workingdirParentDirPathMask: './{TURMA}/{NICK_ALUNO}/',
@@ -61,34 +61,48 @@ module.exports = {
   lookupDirPathMask: './{TURMA}/.duis.lookup/', // arquivos que iniciam com `.` são ignorados na busca dos "parent dir"
 
   // a partir do diretório "workingdir", é preciso voltar quantos níveis para ir ao que tem o `.git` (do aluno)?
-  levelsToRootDir: 0, // 0 se não for existir um diretório de trabalho específico, i.e., usado em `duis .`
+  levelsToRootDir: 1, // 0 se não for existir um diretório de trabalho específico, i.e., usado em `duis .`
 
   /*************************** OPCIONAIS ***************************/
 
+  // glob pattern dos arquivos que serão ignorados nas buscas do duis-exec
   excludeMasks: [
-    './{TURMA}/**/__*__', // exemplo: excluindo qualquer arquivo que inicie e termine com `__`
+    './{TURMA}/**/__*__', // excluindo qualquer arquivo que inicie e termine com `__`
   ],
 
   // nome padrão para o identificador no lookup
-  entryDirName: '', // se for um valor falsy, o padrão será inferido a partir dos argumentos do CLI
+  entryDirName: '', // se for um valor falsy, o padrão será inferido a partir dos argumentos do duis-exec
 
-  // navegador que abrirá na pasta do aluno (ou o server, se iniciado)
-  _browser: {
-    name: 'chrome',
-    opts: '--incognito', // as opções que o navegador suporta, separadas por espaço
-    autoOpen: false, // se o navegador deve ser aberto automaticamente a cada "workingdir"
+  // configuração da sessão que será usada no duis-exec
+  session: {
+    // `true` se deseja iniciar uma nova sessão
+    new: false,
+    // caminho para o arquivo de sessão
+    file: './.duis.session' // se for um valor falsy, a sessão não será salva
   },
 
-  // porta em que o servidor PHP tentará escutar
-  serverPort: 8080,
+  // navegador que abrirá na pasta do aluno (ou o server, se iniciado) no duis-exec
+  browser: {
+    name: 'chrome',
+    opts: '--incognito', // as opções que o navegador suporta, separadas por espaço
+    autoOpen: false // se o navegador deve ser aberto automaticamente a cada "workingdir"
+  },
 
+  // configuração do servidor para o duis-exec
+  server: {
+    // caminho para o arquivo binário (executável)
+    bin: 'php', // atualmente, suporta apenas o CLI do PHP
+    port: 8080 // porta em que o servidor tentará escutar
+  },
+
+  //
   test: {
     // como devem terminar os arquivos de testes, i.e, a extensão deles
     fileExtName: '.test.js',
     // template do diretório em que estarão descritos os testes para cada "trabalho" (workingdir)
     dirPathMask: './{TURMA}/__tests__', // os arquivos devem estar no formato: `<ENTRY_DIR>.<fileExtName>`
     // comando que será executado sobre o arquivo de "teste" do trabalho corrente
-    commandToRun: 'testcafe chrome:headless --color -u'
+    command: 'testcafe chrome:headless --color -u'
   },
 
   // questões a serem respondidas imediatamente após o setup das config
@@ -103,8 +117,12 @@ module.exports = {
   // comandos a serem executados na linha de comandos em alguns estágios do duis-exec
   hooks: {
     // antes de procurar pelos diretórios
-    _beforeStart: [
-      'git pull --recurse-submodules',
+    beforeStart: [
+      ['git', 'pull', '--recurse-submodules'],
+      ['./foo.sh', '.', { TURMA: '{TURMA}' }],
+      // |          |   ^ se o último elemento for um `Object`, será usado como env. variables
+      // |          +------- command arguments
+      // +----- command
     ],
 
     // antes de abrir o navegador na pasta do aluno -- assim que entrar no "workingdir"
@@ -114,7 +132,7 @@ module.exports = {
     beforeLeaveWD: [],
 
     // após ter percorrido todos os "workingdir" encontrados
-    onFinish: [],
+    onFinish: []
   },
 
   // `true` para sempre confirmar a execução de comandos definidos pelo usuário

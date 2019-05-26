@@ -1,5 +1,5 @@
 const path = require('path')
-const { trueCasePathSync } = require('true-case-path')
+// const { trueCasePathSync } = require('true-case-path')
 const hshell = require('./human-shell')
 const { utils: _, sty, openBrowser, PHPServer, constants } = require('../lib')
 
@@ -46,43 +46,70 @@ for (const [configName, configValue] of Object.entries(priorityConfigs)) {
 //#endregion
 
 //#region [lift session]
-const sessionAbsPath = pathJoinWithRoot(constants.DUIS_SESSION_FILENAME)
+// NOTE: updateSessionFile
+config['updateSessionFile'] = () => {}
+// NOTE: removeSessionFile
+config['removeSessionFile'] = () => {}
+// NOTE: getFromSession
+config['getFromSession'] = () => {}
+if (config.session) {
+  const configContext = _.getDeep(config, ['session'])
 
-const sessionTemplate = {
-  'lastAnswersToStartQuestions': {},
-  'lastWorkingdirsParents': [],
-}
+  const sessionTemplate = {
+    'lastAnswersToStartQuestions': {},
+    'lastWorkingdirsParents': [],
+  }
 
-if (config.new) { // create a new session file, overwriting the last one
-  _.writeJSON(sessionAbsPath, sessionTemplate)
-}
+  const sessionFilename = configContext.file
+  const sessionAbsPath = sessionFilename && pathJoinWithRoot(sessionFilename)
 
-const currentSession = (function loadSession() {
-  const session = Object.assign({}, sessionTemplate)
+  const mustCreateNewSessionFile = sessionAbsPath && configContext.new
+  if (mustCreateNewSessionFile) {
+    _.writeJSON(sessionAbsPath, sessionTemplate)
+  }
 
-  if (!hshell.isReadableFile(sessionAbsPath)) {
+  const currentSession = (function loadSession() {
+    const session = Object.assign({}, sessionTemplate)
+
+    if (!hshell.isReadableFile(sessionAbsPath)) {
+      return session
+    }
+
+    const storedSession = _.loadJSON(sessionAbsPath)
+    if (storedSession) {
+
+      return Object.assign(session, storedSession)
+    }
+
     return session
+  }())
+
+  const updateSessionFile = (dataToMerge) => {
+    if (sessionAbsPath) {
+      return _.writeJSON(sessionAbsPath, Object.assign(currentSession, dataToMerge))
+    }
   }
 
-  const storedSession = _.loadJSON(sessionAbsPath)
-  if (storedSession) {
+  const removeSessionFile = () => hshell.rm(sessionAbsPath)
 
-    return Object.assign(session, storedSession)
+  const getFromSession = (pathToLookup) => {
+    if (!Array.isArray(pathToLookup)) {
+      pathToLookup = [pathToLookup]
+    }
+
+    const valueStored = _.getDeep(currentSession, pathToLookup)
+    return valueStored
   }
 
-  return session
-}())
+  config['currentSession'] = currentSession
+  // NOTE: updateSessionFile
+  config['updateSessionFile'] = updateSessionFile
+  // NOTE: removeSessionFile
+  config['removeSessionFile'] = removeSessionFile
+  // NOTE: getFromSession
+  config['getFromSession'] = getFromSession
 
-const updateSessionFile = dataToMerge =>
-  _.writeJSON(sessionAbsPath, Object.assign(currentSession, dataToMerge))
-
-const getFromSession = (pathToLookup, fallbackValue) => {
-  if (!Array.isArray(pathToLookup)) {
-    pathToLookup = [pathToLookup]
-  }
-
-  const valueStored = _.getDeep(currentSession, pathToLookup)
-  return (typeof valueStored !== 'undefined') ? valueStored : fallbackValue
+  delete config.session
 }
 //#endregion
 
@@ -91,7 +118,6 @@ const defaultStartQuestions = [
   {
     type: 'input',
     name: 'commitLimitDate',
-    // default: getFromSession(['lastAnswersToStartQuestions', 'commitLimitDate'], new Date().toISOString().substr(0, 10)),
     default: new Date().toISOString().substr(0, 10),
     message: `Data máxima dos commits ${sty.secondary('[AAAA-MM-DD]')}`,
     validate: input => !input.trim() ? 'Formato inválido!' : (/^\d{4}-\d{2}-\d{2}$/).test(input)
@@ -103,7 +129,7 @@ const overrideDefaultValue = (question) => {
     return question
   }
 
-  const lastValue = getFromSession(['lastAnswersToStartQuestions', question.name], question.default)
+  const lastValue = _.coalesce(config.getFromSession(['lastAnswersToStartQuestions', question.name]), question.default)
   question.default = lastValue
 
   return question
@@ -114,7 +140,7 @@ const startAnswers = await _.rawPrompt([
   ...config.startQuestions,
 ].map(overrideDefaultValue))
 
-updateSessionFile({
+config.updateSessionFile({
   'lastAnswersToStartQuestions': {
     ...startAnswers,
   },
@@ -146,24 +172,29 @@ config['lookupDirAbsPath'] = lookupDirAbsPath
 
 
 if (config.excludeMasks) {
-  const excludePatternsAbsPath = config.excludeMasks.map((excludeMask) => {
+  const configContext = _.getDeep(config, ['excludeMasks'])
+
+  const excludePatternsAbsPath = configContext.map((excludeMask) => {
     const excludePattern = _.t(excludeMask, startVariables)
     const excludePatternAbsPath = pathJoinWithRoot(excludePattern)
     return excludePatternAbsPath
   })
 
-  delete config['excludeMasks']
   // NOTE: excludePatternsAbsPath
   config['excludePatternsAbsPath'] = excludePatternsAbsPath
+
+  delete config.excludeMasks
 }
 
-if (config.test && config.test.commandToRun) {
-  const testsDirPath = _.t(config.test.dirPathMask, startVariables)
+if (config.test) {
+  const configContext = _.getDeep(config, ['test'])
+
+  const testsDirPath = _.t(configContext.dirPathMask, startVariables)
   const testsDirAbsPath = pathJoinWithRoot(testsDirPath)
 
-  if ( hshell.isDirectory(testsDirAbsPath) ) {
-    const commandToTest = config.test.commandToRun
-    const fileExtName = config.test.fileExtName || ''
+  const commandToRunTest = configContext.command
+  if (commandToRunTest && hshell.isDirectory(testsDirAbsPath)) {
+    const fileExtName = configContext.fileExtName || ''
 
     // NOTE: testsDirAbsPath
     config['testsDirAbsPath'] = testsDirAbsPath
@@ -176,12 +207,12 @@ if (config.test && config.test.commandToRun) {
       })
 
       if (hshell.isReadableFile(fileToTestAbsPath)) {
-        return `${commandToTest} ${fileToTestAbsPath} ${args.join(' ')}`
+        return `${commandToRunTest} ${fileToTestAbsPath} ${args.join(' ')}`
       }
     }
   }
 
-  delete config['test']
+  delete config.test
 }
 
 if (typeof config.lookupAttachExtra !== 'function') {
@@ -191,18 +222,22 @@ if (typeof config.lookupAttachExtra !== 'function') {
 
 // NOTE: openBrowserAt
 config['openBrowserAt'] = () => {}
-if (config.browser && config.browser.name) {
-  const browserName = config.browser.name
+if (config.browser) {
+  const configContext = _.getDeep(config, ['browser'])
+
+  const browserName = configContext.name
 
   // NOTE: openBrowserAt
   config['openBrowserAt'] = async function openBrowserAt(URL, usingFileProtocol) {
+    if (!browserName || !browserName.trim()) return
+
     const _openBrowser = openBrowser.bind(null, browserName, {
       path: URL,
-      opts: config.browser.opts,
+      opts: configContext.opts,
       isFile: usingFileProtocol,
     })
 
-    if (config.browser.autoOpen) {
+    if (configContext.autoOpen) {
       return _openBrowser()
     }
 
@@ -214,13 +249,21 @@ if (config.browser && config.browser.name) {
       return _openBrowser()
     }
   }
+
+  delete config.browser
 }
 
 // NOTE: stopServer
 config['stopServer'] = () => {}
-if (config.serverPort) {
-  const phpServer = new PHPServer({host: 'localhost', port: config.serverPort})
-  _.addToOnCleanup(phpServer.shutDown.bind(phpServer))
+if (config.server) {
+  const configContext = _.getDeep(config, ['server'])
+
+  const phpServer = new PHPServer({
+    bin: configContext.bin,
+    host: 'localhost',
+    port: configContext.port,
+  })
+  _.addToOnCleanup( phpServer.shutDown.bind(phpServer) )
 
   // NOTE: initServer
   config['initServer'] = function initServer(docroot, onProcessClose = () => {}) {
@@ -232,6 +275,8 @@ if (config.serverPort) {
   config['stopServer'] = function stopServer() {
     return phpServer.shutDown()
   }
+
+  delete config.server
 }
 
 const userCommandsHooks = config.hooks || {}
@@ -249,31 +294,49 @@ function getRootDirForWorkingdir(wdAbsPath) {
     ('..' + path.sep).repeat(config.levelsToRootDir)))
 }
 
-async function runHookOn(context, name) {
-  if (!context || !context[name]) return
+const runCommand = (command, { args = [], argsStr = '', envVariables }) => {
+  _.wrapSyncOutput(() => {
+    log(sty`{secondary {bold %s} %s}`, '$', `${command} ${argsStr}`)
+    try {
+      hshell.spawn(command, args, {
+        env: envVariables,
+      })
+    } catch (err) {
+      log(sty.error(err.message))
+      if (isDev) console.error(err)
+    }
+  })
+}
 
-  for (const commandMask of context[name]) {
-    const command = _.t(commandMask, startVariables)
+async function runHookOn(context, name) {
+  if (!context || !(name in context) || !context[name]) return
+
+  const defaultEnvVars = Object.assign({}, process.env)
+
+  for (const commandStatementMasks of context[name]) {
+    const commandStatement = commandStatementMasks
+      .filter(cmdStMask => (typeof cmdStMask === 'string') && (cmdStMask.trim()))
+      .map(cmdStMask => _.t(cmdStMask, startVariables))
+
+    const lastElement = commandStatementMasks.pop()
+    const envVariables = (function () {
+      const envVariablesMask = (typeof lastElement === 'object' ? lastElement : {})
+      const envVariables = _.mapKeys(envVariablesMask, val => _.t(val, startVariables))
+      return {
+        ...defaultEnvVars,
+        ...envVariables,
+      }
+    }())
+
+    const [command, ...args] = commandStatement
+    const argsStr = args ? args.join(' ') : ''
 
     if (config.safe) {
-      const { reply: canRunCommand } = await confirmCmdExecution(command)
+      const { reply: canRunCommand } = await confirmCmdExecution(`${command} ${argsStr}`)
       if (!canRunCommand) continue
     }
 
-    _.wrapSyncOutput(() => {
-      log(sty`{secondary {bold %s} %s}`, '$', command)
-      try {
-        // if `command` needs to read from stdin, this will not work properly with `set -v` mode
-        // TODO: tentar usando o `execa`
-        hshell.exec(command, { silent: false })
-        // XXX: não deixa o output bonito
-        // const commandOutput = hshell.runSafe(command)
-        // log(sty`{white %s}`, commandOutput)
-      } catch (err) {
-        log(sty.error(err.message))
-        if (isDev) console.error(err)
-      }
-    })
+    runCommand(command, {args, argsStr, envVariables})
   }
 }
 
@@ -357,7 +420,6 @@ async function runAt(index, workingdirAbsPath) {
   let rootDirName = path.basename(rootDirAbsPath)
 
   let rootLookupFileAbsPath = path.join(config.lookupDirAbsPath, rootDirName + '.json')
-  // rootLookupFileAbsPath = config.caseInsensitive ? trueCasePathSync(rootLookupFileAbsPath) : rootLookupFileAbsPath
   if ( !hshell.isReadableFile(rootLookupFileAbsPath) ) {
     log(sty`{error %s {bold %s}}`, 'File not found:', rootLookupFileAbsPath)
 
@@ -519,7 +581,7 @@ async function runAt(index, workingdirAbsPath) {
 
 const globOptions = {
   absolute: true,
-  nocase: config.caseInsensitive || false,
+  // nocase: !!config.caseInsensitive,
   ignore: config.excludePatternsAbsPath,
 }
 
@@ -530,7 +592,7 @@ const userHooksDefined = constants.AVAILABLE_HOOKS.reduce((total, hookName) => {
   return total
 }, '')
 
-const { lastWorkingdirsParents } = currentSession
+const lastWorkingdirsParents = _.getDeep(config, ['currentSession', 'lastWorkingdirsParents'])
 
 // directories to ignore when looking for "workingdir"
 const blackListDirectories = [
@@ -551,11 +613,16 @@ const parentDirs = _.globPattern(config.workingdirsDirAbsPath, globOptions)
 
 const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
 const workingdirs = _.globPattern(resolvedWorkindirsPath, globOptions)
-const workingdirsFiltered = workingdirs.filter((workingdirAbsPath) => {
-  const workingdirParent = getRootDirForWorkingdir(workingdirAbsPath)
-  return !lastWorkingdirsParents
-    .some(lastFoundWorkingdir => _.hasSamePath(workingdirParent, lastFoundWorkingdir))
-})
+const workingdirsFiltered = (function () {
+  if (!lastWorkingdirsParents) return workingdirs
+
+  return workingdirs.filter((workingdirAbsPath) => {
+    const workingdirParent = getRootDirForWorkingdir(workingdirAbsPath)
+    return !lastWorkingdirsParents
+      .some(lastFoundWorkingdir => _.hasSamePath(workingdirParent, lastFoundWorkingdir))
+  })
+}())
+
 
 //#region [3]
 // FIXME: se for ignore sensitive, será preciso identificar o real `lookupDirAbsPath`
@@ -583,7 +650,7 @@ for (let idx = 0; idx < workingdirsFiltered.length; ++idx) {
   //#region
   lastWorkingdirsParents.push( getRootDirForWorkingdir(workingdirAbsPath) )
 
-  updateSessionFile({
+  config.updateSessionFile({
     lastWorkingdirsParents,
   })
   //#endregion
