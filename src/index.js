@@ -638,6 +638,7 @@ if (userHooksDefined) {
 }
 
 const parentDirs = _.globPattern(config.workingdirsDirAbsPath, globOptions)
+let skippedWorkingdirs = 0
 
 const resolvedWorkindirsPath = path.resolve(config.workingdirsDirAbsPath, entryDirPath)
 const workingdirs = _.globPattern(resolvedWorkindirsPath, globOptions)
@@ -646,8 +647,12 @@ const workingdirsFiltered = (function () {
 
   return workingdirs.filter((workingdirAbsPath) => {
     const workingdirParent = getRootDirForWorkingdir(workingdirAbsPath)
-    return !lastWorkingdirsParents
+    const found = lastWorkingdirsParents
       .some(lastFoundWorkingdir => _.hasSamePath(workingdirParent, lastFoundWorkingdir))
+
+    if (found) ++skippedWorkingdirs
+
+    return !found
   })
 }())
 
@@ -659,8 +664,9 @@ hshell.createDirIfNotExists(config.lookupDirAbsPath)
 
 //#region
 _.displayBox([
-  `Total de diretórios pai : ${sty.bold(parentDirs.length)}`,
-  `Total que será analisado: ${sty.bold(workingdirsFiltered.length)}`,
+  `De ${sty.bold(parentDirs.length)} diretórios-pai encontrados`,
+  `${sty.bold(skippedWorkingdirs)} foram pulados (recuperados da sessão)`,
+  `e ${sty.bold(workingdirsFiltered.length)} serão analisados agora`,
 ])
 //#endregion
 
