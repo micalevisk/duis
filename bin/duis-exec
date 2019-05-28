@@ -6,7 +6,7 @@ const { exec } = require('../commands');
 
 program
   .description('Executar o Duis usando o arquivo de configuração informado.')
-  .arguments('[PATH/TO/CONFIG_FILE] [PATH/TO/TRAB_FILE]')
+  .arguments('[PATH/TO/CONFIG_FILE] <PATH/TO/TRAB_FILE>')
 
   .option('--caseInsensitive', '')
   .option('--session.new', 'using a new session')
@@ -19,6 +19,11 @@ program
   .option('--hooks.onFinish <commands-to-run>', '(comma-separated)')
 
   .parse(process.argv);
+
+if (program.args < 1) {
+  program.outputHelp();
+  process.exit(1);
+}
 
 // assuming: $ duis <PATH/TO/CONFIG-FILE> <PATH/TO/TRAB-FILE>
 let [pathToConfigFile, pathToTrabFile] = program.args;

@@ -10,7 +10,7 @@ program
 
 program
   .command('checkup [path/to/config_file]', 'check all lookup files')
-  .command('exec [path/to/config_file] [path/to/trab_file]', 'run Duis',  { isDefault: true })
+  .command('exec [path/to/config_file] <path/to/trab_file>', 'run Duis above current directory',  { isDefault: true })
   .command('init [options] [path/to/root]', 'create a `duis.config.js` file');
 
 program.parse(process.argv);
