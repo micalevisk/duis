@@ -15,16 +15,16 @@ module.exports = async function exec(pathToConfigFile, pathToTrabFile, priorityC
   const configFileAbsPath = path.resolve(pathToConfigFile, DUIS_CONFIG_FILENAME)
 
   setupProcessListeners()
+
   return duis(configFileAbsPath, pathToTrabFile, priorityConfigs)
-    .catch((err) => {
-      console.error(sty.error('[ERROR] ' + err.message))
-      if (isDev) console.error(err)
-      process.exit(9)
-    })
+    .catch(onExecFatalError)
 }
 
 function setupProcessListeners() {
   process.stdin.resume() // the program will not close instantly
+
+  /** @see https://nodejs.org/api/process.html#process_process_setuncaughtexceptioncapturecallback_fn */
+  process.setUncaughtExceptionCaptureCallback(onExecFatalError)
 
   /** @see https://nodejs.org/api/process.html#process_event_unhandledrejection */
   process.on('unhandledRejection', (reason, p) => {
@@ -36,7 +36,7 @@ function setupProcessListeners() {
   process.stdin.setRawMode(true)
   process.stdin.setEncoding('utf8')
   process.stdin.on('data', function stdinOnData(key) {
-    // ctrl-c (end of text) or Esc
+    // when press `ctrl-c` (end of text) or `Esc` keys
     if (key === '\u0003' || key === '\x1b') {
       process.emit('cleanup')
       process.emit('exit')
@@ -44,4 +44,10 @@ function setupProcessListeners() {
       return
     }
   })
+}
+
+function onExecFatalError(err) {
+  console.error(sty`{error {bold %s} %s}`, '[ERROR]', err.message)
+  if (isDev) console.error(err)
+  process.exit(9)
 }

@@ -16,7 +16,7 @@ hshell.config.silent = true
 module.exports = async function duisAbove(configFileAbsPath, pathToTrabFile, priorityConfigs) {
 
 if ( !hshell.isReadableFile(configFileAbsPath) ) {
-  throw new Error('File not found: ' + configFileAbsPath)
+  throw new Error('{FILE_CONFIG}:: ' + `File not found: ${configFileAbsPath}`)
 }
 
 const pathJoinWithRoot = path.resolve.bind(null, configFileAbsPath, '..')
@@ -258,6 +258,10 @@ config['stopServer'] = () => {}
 if (config.server) {
   const configContext = _.getDeep(config, ['server'])
 
+  if (! hshell.hasProgram(configContext.bin) ) {
+    throw new Error('{SERVER_CONFIG}:: ' + `The program '${configContext.bin}' is not a valid binary`)
+  }
+
   const phpServer = new PHPServer({
     bin: configContext.bin,
     host: 'localhost',
@@ -266,9 +270,21 @@ if (config.server) {
   _.addToOnCleanup( phpServer.shutDown.bind(phpServer) )
 
   // NOTE: initServer
-  config['initServer'] = function initServer(docroot, onProcessClose = () => {}) {
-    phpServer.initServer(docroot).on('close', onProcessClose)
-    return phpServer
+  config['initServer'] = async function initServer(docroot) {
+    const terminal = phpServer.initServer(docroot)
+    return new Promise((resolve, reject) => {
+      // waiting for some error which will clear this interval
+      const timeoutId = setTimeout(() => {
+        resolve(phpServer)
+      }, 123)
+      // ^^^ some magic number just to wait for any `error` event
+
+      terminal.addListener('error', (err) => {
+        clearInterval(timeoutId)
+        if (isDev) console.error(err)
+        reject(err)
+      })
+    })
   }
 
   // NOTE: stopServer
@@ -506,18 +522,30 @@ async function runAt(index, workingdirAbsPath) {
   }
   //#endregion
 
-  if (config.initServer) {
-    //#region [4.5]
-    const serverAddress = 'http://' + config.initServer(__workingdirAbsPath).hostaddress
-    // FIXME: esperar validar a conexão do server
-    log(sty`{success %s {bold %s}}`, 'Server iniciado em:', serverAddress)
-    await config.openBrowserAt(serverAddress)
-    //#endregion
-  } else {
-    //#region [4.6]
-    await config.openBrowserAt(workingdirAbsPath, true)
-    //#endregion
+  const openBrowser = (address) => {
+    return (!address)
+      ? config.openBrowserAt(workingdirAbsPath, true) // using file protocol
+      : config.openBrowserAt(address) // assuming that the `address` is a valid URL
   }
+
+  let serverAddress
+  //#region [4.5]
+  if (config.initServer) {
+    try {
+      const serverInstance = await config.initServer(__workingdirAbsPath)
+      serverAddress = 'http://' + serverInstance.hostaddress
+      log(sty`{success %s {bold %s}}`, 'Server iniciado em:', serverAddress)
+    } catch (err) {
+      log(sty`{error {bold %s} %s}`, '[SERVER ERROR]:', err.message)
+      if (isDev) console.error(err)
+    }
+  }
+  //#endregion
+
+  //#region [4.6]
+  // open the browser even when the server is not listening
+  await openBrowser(serverAddress)
+  //#endregion
 
   //#region [4.7]
   if (config.commandOnTest) {
