@@ -11,6 +11,7 @@ program
   .option('--caseInsensitive', '')
   .option('--session.new', 'using a new session')
   .option('--session.file <PATH/TO/SESSION/FILE>', '')
+  .option('--server.bin <PATH/TO/BINARY>', '')
   .option('--workingdirParentDirPathMask <MASK/PATH/TO/PARENT>', '')
   .option('--safe', '')
   .option('--entryDirName <entry-id>', 'set the lookup identifier')

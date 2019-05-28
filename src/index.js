@@ -120,7 +120,10 @@ const defaultStartQuestions = [
     name: 'commitLimitDate',
     default: new Date().toISOString().substr(0, 10),
     message: `Data máxima dos commits ${sty.secondary('[AAAA-MM-DD]')}`,
-    validate: input => !input.trim() ? 'Formato inválido!' : (/^\d{4}-\d{2}-\d{2}$/).test(input)
+    validate: input => {
+      if (!input.trim()) return 'Informe algo!'
+      return (/^\d{4}-\d{2}-\d{2}$/).test(input) ? true : 'Formato inválido!'
+    }
   },
 ]
 
@@ -258,38 +261,42 @@ config['stopServer'] = () => {}
 if (config.server) {
   const configContext = _.getDeep(config, ['server'])
 
-  if (! hshell.hasProgram(configContext.bin) ) {
-    throw new Error('{SERVER_CONFIG}:: ' + `The program '${configContext.bin}' is not a valid binary`)
-  }
+  if (configContext.bin) {
 
-  const phpServer = new PHPServer({
-    bin: configContext.bin,
-    host: 'localhost',
-    port: configContext.port,
-  })
-  _.addToOnCleanup( phpServer.shutDown.bind(phpServer) )
+    if (! hshell.hasProgram(configContext.bin) ) {
+      throw new Error('{SERVER_CONFIG}:: ' + `The program '${configContext.bin}' is not a valid binary`)
+    }
 
-  // NOTE: initServer
-  config['initServer'] = async function initServer(docroot) {
-    const terminal = phpServer.initServer(docroot)
-    return new Promise((resolve, reject) => {
-      // waiting for some error which will clear this interval
-      const timeoutId = setTimeout(() => {
-        resolve(phpServer)
-      }, 123)
-      // ^^^ some magic number just to wait for any `error` event
-
-      terminal.addListener('error', (err) => {
-        clearInterval(timeoutId)
-        if (isDev) console.error(err)
-        reject(err)
-      })
+    const phpServer = new PHPServer({
+      bin: configContext.bin,
+      host: 'localhost',
+      port: configContext.port,
     })
-  }
+    _.addToOnCleanup( phpServer.shutDown.bind(phpServer) )
 
-  // NOTE: stopServer
-  config['stopServer'] = function stopServer() {
-    return phpServer.shutDown()
+    // NOTE: initServer
+    config['initServer'] = async function initServer(docroot) {
+      const terminal = phpServer.initServer(docroot)
+      return new Promise((resolve, reject) => {
+        // waiting for some error which will clear this interval
+        const timeoutId = setTimeout(() => {
+          resolve(phpServer)
+        }, 123)
+        // ^^^ some magic number just to wait for any `error` event
+
+        terminal.addListener('error', (err) => {
+          clearInterval(timeoutId)
+          if (isDev) console.error(err)
+          reject(err)
+        })
+      })
+    }
+
+    // NOTE: stopServer
+    config['stopServer'] = function stopServer() {
+      return phpServer.shutDown()
+    }
+
   }
 
   delete config.server
