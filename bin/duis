@@ -9,8 +9,9 @@ program
   .version(pkg.version);
 
 program
-  .command('checkup [path/to/config_file]', 'check all lookup files')
-  .command('exec [path/to/config_file] <path/to/trab_file>', 'run Duis above current directory',  { isDefault: true })
-  .command('init [options] [path/to/root]', 'create a `duis.config.js` file');
+  // .command('checkup [path/to/config_file]', 'check all lookup files')
+  .command('exec [path/to/config_file] <path/to/trab_file> [options]', 'run Duis above current directory',  { isDefault: true })
+  .command('init [path/to/root] [options]', 'create a `duis.config.js` file with default values')
+  .command('uplookups [path/to/config_file] [options]', 'update lookup files entry values')
 
-program.parse(process.argv);
+  .parse(process.argv);

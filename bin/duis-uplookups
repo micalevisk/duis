@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+'use strict';
+
+const program = require('commander');
+const { uplookups } = require('../commands');
+
+program
+  .description('.')
+  .arguments('[PATH/TO/CONFIG_FILE]')
+  .option('-e, --entry [ENTRYS]', 'as chaves do lookup que sofrerão a atualização. Separadas por vírgula.', '*')
+  .parse(process.argv);
+
+// assuming: $ duis uplookups <PATH/TO/CONFIG-FILE>
+let [ pathToConfigFile ] = program.args;
+// otherwise: $ duis uplookups
+if (!program.args.length) {
+  pathToConfigFile = '.';
+}
+
+uplookups(pathToConfigFile)
