@@ -1,7 +1,6 @@
 const path = require('path')
-const hsell = require('../../src/human-shell')
-
-const { DUIS_CONFIG_FILENAME } = require('../../lib').constants
+const { hshell, constants } = require('../../lib')
+const { DUIS_CONFIG_FILENAME } = constants
 
 /**
  *
@@ -13,7 +12,7 @@ module.exports = function init(cwd, canOverride = false) {
   const absPathToLookupFile = path.resolve(cwd, DUIS_CONFIG_FILENAME)
 
   const createFile = () =>
-    hsell.cat(absPathToTemplateFile).toEnd(absPathToLookupFile)
+    hshell.cat(absPathToTemplateFile).toEnd(absPathToLookupFile)
 
   const resultMsg = code => (code === 0)
     ? `File created at: ${absPathToLookupFile}`
@@ -23,7 +22,7 @@ module.exports = function init(cwd, canOverride = false) {
     const { code } = createFile()
     console.log(resultMsg(code))
   } else {
-    if (hsell.test('-f', absPathToLookupFile)) {
+    if (hshell.test('-f', absPathToLookupFile)) {
       console.log(`The file "${absPathToLookupFile}" already exist`);
     } else {
       const { code } = createFile()

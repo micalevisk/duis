@@ -1,7 +1,14 @@
 const path = require('path')
 // const { trueCasePathSync } = require('true-case-path')
-const hshell = require('./human-shell')
-const { utils: _, sty, openBrowser, PHPServer, constants } = require('../lib')
+const {
+  utils: _,
+  constants,
+  core: { useConfig },
+  hshell,
+  openBrowser,
+  PHPServer,
+  sty,
+} = require('../lib')
 
 const isDev = process.env.NODE_ENV === 'development'
 const log = console.log
@@ -15,11 +22,7 @@ hshell.config.silent = true
  */
 module.exports = async function duisAbove(configFileAbsPath, pathToTrabFile, priorityConfigs) {
 
-if ( !hshell.isReadableFile(configFileAbsPath) ) {
-  throw new Error('{FILE_CONFIG}:: ' + `File not found: ${configFileAbsPath}`)
-}
-
-const pathJoinWithRoot = path.resolve.bind(null, configFileAbsPath, '..')
+const pathJoinWithRoot = useConfig(configFileAbsPath)
 
 // ███████╗███████╗████████╗██╗   ██╗██████╗
 // ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
