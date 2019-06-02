@@ -15,15 +15,16 @@
     "boxen": "^3.2.0",
     "chalk": "^2.4.2",
     "commander": "^2.20.0",
+    "deep-for-each": "^3.0.0",
     "glob": "^7.1.4",
     "inquirer": "^6.3.1",
     "inquirer-fuzzy-path": "^2.0.3",
     "inquirer-prompt-suggest": "^0.1.0",
-    "open": "^6.2.0",
+    "open": "^6.3.0",
     "shelljs": "^0.8.3",
     "true-case-path": "^2.0.0"
   },
   "devDependencies": {
-    "nodemon": "^1.18.11"
+    "nodemon": "^1.19.1"
   }
 }

@@ -1,9 +1,8 @@
 const path = require('path')
-// const { trueCasePathSync } = require('true-case-path')
 const {
   utils: _,
   constants,
-  core: { useConfig },
+  core: { useConfig, createTemplateMapper },
   hshell,
   openBrowser,
   PHPServer,
@@ -23,6 +22,7 @@ hshell.config.silent = true
 module.exports = async function duisAbove(configFileAbsPath, pathToTrabFile, priorityConfigs) {
 
 const pathJoinWithRoot = useConfig(configFileAbsPath)
+const entryDirPath = pathToTrabFile
 
 // ███████╗███████╗████████╗██╗   ██╗██████╗
 // ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
@@ -123,14 +123,14 @@ const defaultStartQuestions = [
     name: 'commitLimitDate',
     default: new Date().toISOString().substr(0, 10),
     message: `Data máxima dos commits ${sty.secondary('[AAAA-MM-DD]')}`,
-    validate: input => {
+    validate: (input) => {
       if (!input.trim()) return 'Informe algo!'
       return (/^\d{4}-\d{2}-\d{2}$/).test(input) ? true : 'Formato inválido!'
     }
   },
 ]
 
-const overrideDefaultValue = (question) => {
+const overrideDefaultValueField = (question) => {
   if (!question.default) {
     return question
   }
@@ -144,44 +144,41 @@ const overrideDefaultValue = (question) => {
 const startAnswers = await _.rawPrompt([
   ...defaultStartQuestions,
   ...config.startQuestions,
-].map(overrideDefaultValue))
+].map(overrideDefaultValueField))
+
+// NOTE: startAnswers
+config['startAnswers'] = startAnswers
+
+const placeholders = Object.keys(startAnswers).filter(_.isUpper)
+// respostas com as keys (name) com letras maiúsculas
+const startVariables = _.pick(startAnswers, placeholders)
+const resolveAllTemplates = createTemplateMapper(startVariables)
+resolveAllTemplates(config) // replaces all placeholders
 
 config.updateSessionFile({
   'lastAnswersToStartQuestions': {
     ...startAnswers,
   },
 })
-
-const namesStartVariables = Object.keys(startAnswers).filter(_.isUpper)
-// respostas com as keys (name) com letras maiúsculas
-const startVariables = _.pick(startAnswers, namesStartVariables)
-
-// NOTE: startAnswers
-config['startAnswers'] = startAnswers
 //#endregion
 
-// resolvido após responder as perguntas de setup
-const workingdirParentDirPath = _.t(config.workingdirParentDirPathMask, startVariables)
+const workingdirParentDirPath = config.workingdirParentDirPath
 const workingdirsDirAbsPath = pathJoinWithRoot(workingdirParentDirPath)
-const entryDirPath = pathToTrabFile
-
-const lookupDirPath = _.t(config.lookupDirPathMask, startVariables)
-const lookupDirAbsPath = pathJoinWithRoot(lookupDirPath)
-
-delete config['workingdirParentDirPathMask']
+delete config['workingdirParentDirPath']
 // NOTE: workingdirsDirAbsPath
 config['workingdirsDirAbsPath'] = workingdirsDirAbsPath
 
-// NOTE: lookupDirAbsPath
+const lookupDirPath = config.lookupDirPath
+const lookupDirAbsPath = pathJoinWithRoot(lookupDirPath)
 delete config['lookupDirPathMask']
+// NOTE: lookupDirAbsPath
 config['lookupDirAbsPath'] = lookupDirAbsPath
 
 
-if (config.excludeMasks) {
-  const configContext = _.getDeep(config, ['excludeMasks'])
+if (config.excludePatterns) {
+  const configContext = _.getDeep(config, ['excludePatterns'])
 
-  const excludePatternsAbsPath = configContext.map((excludeMask) => {
-    const excludePattern = _.t(excludeMask, startVariables)
+  const excludePatternsAbsPath = configContext.map((excludePattern) => {
     const excludePatternAbsPath = pathJoinWithRoot(excludePattern)
     return excludePatternAbsPath
   })
@@ -189,13 +186,13 @@ if (config.excludeMasks) {
   // NOTE: excludePatternsAbsPath
   config['excludePatternsAbsPath'] = excludePatternsAbsPath
 
-  delete config.excludeMasks
+  delete config.excludePatterns
 }
 
 if (config.test) {
   const configContext = _.getDeep(config, ['test'])
 
-  const testsDirPath = _.t(configContext.dirPathMask, startVariables)
+  const testsDirPath = configContext.dirPath
   const testsDirAbsPath = pathJoinWithRoot(testsDirPath)
 
   const commandToRunTest = configContext.command
@@ -339,22 +336,16 @@ async function runHookOn(context, name) {
 
   const defaultEnvVars = Object.assign({}, process.env)
 
-  for (const commandStatementMasks of context[name]) {
-    const commandStatement = commandStatementMasks
+  for (const commandStatements of context[name]) {
+    const valdiCommandStatements = commandStatements
       .filter(cmdStMask => (typeof cmdStMask === 'string') && (cmdStMask.trim()))
-      .map(cmdStMask => _.t(cmdStMask, startVariables))
 
-    const lastElement = commandStatementMasks.pop()
-    const envVariables = (function () {
-      const envVariablesMask = (typeof lastElement === 'object' ? lastElement : {})
-      const envVariables = _.mapKeys(envVariablesMask, val => _.t(val, startVariables))
-      return {
-        ...defaultEnvVars,
-        ...envVariables,
-      }
-    }())
+    const lastElement = commandStatements.pop()
+    const envVariables = ((typeof lastElement === 'object') && !(Array.isArray(lastElement)))
+      ? Object.assign({}, defaultEnvVars, lastElement)
+      : Object.assign({}, defaultEnvVars, lastElement)
 
-    const [command, ...args] = commandStatement
+    const [command, ...args] = valdiCommandStatements
     const argsStr = args ? args.join(' ') : ''
 
     if (config.safe) {
