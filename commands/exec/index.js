@@ -23,8 +23,8 @@ module.exports = async function exec(pathToConfigFile, pathToTrabFile, priorityC
 function setupProcessListeners() {
   process.stdin.resume() // the program will not close instantly
 
-  /** @see https://nodejs.org/api/process.html#process_process_setuncaughtexceptioncapturecallback_fn */
-  process.setUncaughtExceptionCaptureCallback(onExecFatalError)
+  /** @see https://nodejs.org/api/process.html#process_event_uncaughtexception */
+  process.on('uncaughtException', onExecFatalError)
 
   /** @see https://nodejs.org/api/process.html#process_event_unhandledrejection */
   process.on('unhandledRejection', (reason, p) => {
