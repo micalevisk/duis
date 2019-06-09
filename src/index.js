@@ -131,13 +131,12 @@ const defaultStartQuestions = [
 ]
 
 const overrideDefaultValueField = (question) => {
-  if (!question.default) {
-    return question
-  }
+  const lastValue = _.coalesce(
+    config.getFromSession(['lastAnswersToStartQuestions', question.name]),
+    question.default
+  )
 
-  const lastValue = _.coalesce(config.getFromSession(['lastAnswersToStartQuestions', question.name]), question.default)
   question.default = lastValue
-
   return question
 }
 
@@ -695,6 +694,7 @@ for (let idx = 0; idx < workingdirsFiltered.length; ++idx) {
 
 //#region
 if (workingdirsFiltered.length) {
+  log() // break line
   await runHookOn(userCommandsHooks, 'onFinish')
 }
 //#endregion
