@@ -31,9 +31,13 @@ foreach ($bootstrap_files as $bf) {
   }
 }
 
+echo "<ol>";
 
-if ($URI != '/' && $URI != '//')
-  echo "<a href='" . urlencode(dirname($URI)) . "'>..</a><br>";
+if ($URI != '/' && $URI != '//') {
+  echo "<li>";
+  echo "<a href='" . urlencode(dirname($URI)) . "'>..</a>";
+  echo "</li>";
+}
 
 $abf = preg_replace('/^\/+|\/$/', '', $URI);
 $fs = glob("$f/*");
@@ -41,8 +45,12 @@ foreach ($fs as $one) {
   $one = str_replace($f.'/', '', $one);
   $encoded_path = preg_replace('/^\/+/', '', "$abf/$one");
 
-  echo "<a href='" . urlencode($encoded_path) . "'>$one</a><br/>";
+  echo "<li>";
+  echo "<a href='" . urlencode($encoded_path) . "'>$one</a>";
+  echo "</li>";
 }
+
+echo "</ol>";
 
 return true;
 
