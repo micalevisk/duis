@@ -6,7 +6,9 @@
     "duis": "bin/duis"
   },
   "scripts": {
-    "test": "node --inspect ./bin/duis example/ HTML"
+    "test": "node --inspect ./bin/duis example/ HTML",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "keywords": [],
   "author": "Micael Levi <mykael2010@hotmail.com> (micalevisk.github.io)",
@@ -22,9 +24,11 @@
     "inquirer-prompt-suggest": "^0.1.0",
     "open": "^6.3.0",
     "shelljs": "^0.8.3",
-    "true-case-path": "^2.0.0"
+    "true-case-path": "^2.0.0",
+    "snyk": "^1.316.1"
   },
   "devDependencies": {
     "nodemon": "^1.19.1"
-  }
+  },
+  "snyk": true
 }
